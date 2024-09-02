@@ -1,0 +1,303 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Hospital Management API",
+        "description": "API for hospital management system",
+        "contact": {
+            "name": "Swagger API Team"
+        },
+        "version": "1.0"
+    },
+    "paths": {
+        "/api/doctors": {
+            "post": {
+                "operationId": "778cd8ef0df19697e8553802414a0ce3",
+                "responses": {
+                    "200": {
+                        "description": "Create new doctor"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    },
+                    "422": {
+                        "description": "Invalid data"
+                    }
+                }
+            }
+        },
+        "/api/doctors/{id}": {
+            "get": {
+                "operationId": "2d1ea8de3399eb5521a7b1911cb8d0a5",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "doctor's id"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Read a specific doctor"
+                    },
+                    "403": {
+                        "description": "Not Authorized"
+                    },
+                    "404": {
+                        "description": "Doctor does not exist"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "748146ca7b4e017dd45916d9808c64eb",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "doctor's id"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Update a specific doctor"
+                    },
+                    "403": {
+                        "description": "Not Authorized"
+                    },
+                    "404": {
+                        "description": "Doctor does not exist"
+                    },
+                    "422": {
+                        "description": "Invalid data"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "b6f107e9241d642eefe4a38b2e772b1b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "doctor's id"
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Delete a specific doctor"
+                    },
+                    "403": {
+                        "description": "Not Authorized"
+                    },
+                    "404": {
+                        "description": "Doctor does not exist"
+                    }
+                }
+            }
+        },
+        "/api/doctors/": {
+            "get": {
+                "operationId": "d6afe32129dcc40d6586f59afb835775",
+                "responses": {
+                    "200": {
+                        "description": "List all users"
+                    },
+                    "403": {
+                        "description": "Not Authorized"
+                    }
+                }
+            }
+        },
+        "/api/nurses": {
+            "post": {
+                "operationId": "c2055b1ac04eef2dfe81aebb3bc0e271",
+                "responses": {
+                    "200": {
+                        "description": "Create new nurse"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    },
+                    "422": {
+                        "description": "Invalid data"
+                    }
+                }
+            }
+        },
+        "/api/nurses/{id}": {
+            "get": {
+                "operationId": "d29d7f2faf300acfb73228c393ce5f02",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "nurse's id"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Read a specifc nurse"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    },
+                    "404": {
+                        "description": "Nurse does not exist"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "ebac9466bcfbff6eebcf17131885fbe0",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "nurse's id"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Update a specifc nurse"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    },
+                    "404": {
+                        "description": "Nurse does not exist"
+                    },
+                    "422": {
+                        "description": "Invalid data"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "e515fbde4842f1a833d959a064d1a335",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "nurse's id"
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Delete a specific nurse"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    },
+                    "404": {
+                        "description": "Nurse does not exist"
+                    },
+                    "422": {
+                        "description": "Invalid data"
+                    }
+                }
+            }
+        },
+        "/api/nurses/": {
+            "get": {
+                "operationId": "5f062e2fe00876769f90939919038ad8",
+                "responses": {
+                    "200": {
+                        "description": "List all nurses"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    }
+                }
+            }
+        },
+        "/api/patients": {
+            "post": {
+                "operationId": "6dde96a3a53830095dfa7f819d88c01d",
+                "responses": {
+                    "200": {
+                        "description": "Create new nurse"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    },
+                    "422": {
+                        "description": "Invalid data"
+                    }
+                }
+            }
+        },
+        "/api/patients/{id}": {
+            "get": {
+                "operationId": "22d08e5654f09834890e0f816195c499",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "patient's id"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Read a specifc patient"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    },
+                    "404": {
+                        "description": "Patient does not exist"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "28ae1f909d4af3faa995a44981762d90",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "patient's id"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Update a specifc patient"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    },
+                    "404": {
+                        "description": "Patient does not exist"
+                    },
+                    "420": {
+                        "description": "Invalid data"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "6393eaff93f8d6f225396ff5f66c8407",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "patient's id"
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Delete a specifc patient"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    },
+                    "404": {
+                        "description": "Patient does not exist"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "bearerFormat": "JWT",
+                "scheme": "bearer"
+            }
+        }
+    }
+}
