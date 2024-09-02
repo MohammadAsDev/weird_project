@@ -7,9 +7,14 @@
 git clone https://github.com/MohammadAsDev/hospital-api
 ```
 2. Install dependencies:
-```bash
-composer install
-```
+    * first go to the project directory
+    ```bash
+    cd hospital-api
+    ```
+    * then install dependencies:
+    ```bash
+    composer install
+    ```
 
 3. Copy environment settings:
     * for windows users:
