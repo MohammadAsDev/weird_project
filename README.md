@@ -4,7 +4,7 @@
 
 1. Clone this repository:
 ```bash
-git clone github.com/MohammadAsDev/hospital-api
+git clone https://github.com/MohammadAsDev/hospital-api
 ```
 2. Install dependencies:
 ```bash
