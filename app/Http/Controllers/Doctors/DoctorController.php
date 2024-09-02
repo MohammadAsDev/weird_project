@@ -76,6 +76,7 @@ class DoctorController extends Controller
     /**
      * @OA\Post(
      *     path="/api/doctors",
+     *     tags={"Admin"},
      *     @OA\Response(response="200", description="Create new doctor"),
      *     @OA\Response(response="403", description="Not authorized"),
      *     @OA\Response(response="422", description="Invalid data"),
@@ -107,6 +108,7 @@ class DoctorController extends Controller
     /**
      * @OA\Get(
      *     path="/api/doctors/{id}",
+     *     tags={"Admin"},
      *     @OA\Parameter(name="id" , description="doctor's id" , in="path"),
      *     @OA\Response(response="200", description="Read a specific doctor"),
      *     @OA\Response(response="403", description="Not Authorized"),
@@ -132,6 +134,7 @@ class DoctorController extends Controller
     /**
      * @OA\Put(
      *     path="/api/doctors/{id}",
+     *     tags={"Admin"},
      *     @OA\Parameter(name="id" , description="doctor's id" , in="path"),
      *     @OA\Response(response="200", description="Update a specific doctor"),
      *     @OA\Response(response="403", description="Not Authorized"),
@@ -170,6 +173,7 @@ class DoctorController extends Controller
     /**
      * @OA\Delete(
      *     path="/api/doctors/{id}",
+     *     tags={"Admin"},
      *     @OA\Parameter(name="id" , description="doctor's id" , in="path"),
      *     @OA\Response(response="204", description="Delete a specific doctor"),
      *     @OA\Response(response="403", description="Not Authorized"),
@@ -194,6 +198,7 @@ class DoctorController extends Controller
     /**
      * @OA\Get(
      *     path="/api/doctors/",
+     *     tags={"Admin"},
      *     @OA\Response(response="200", description="List all doctors"),
      *     @OA\Response(response="403", description="Not Authorized")
      * )
@@ -214,6 +219,7 @@ class DoctorController extends Controller
     /**
      * @OA\Get(
      *     path="/api/doctors/{id}/nurses",
+     *     tags={"Admin"},
      *     @OA\Parameter(name="id" , description="doctor's id" , in="path"),
      *     @OA\Response(response="200", description="List all nurses working with a specific doctor"),
      *     @OA\Response(response="404", description="doctor does not exist"),
@@ -227,7 +233,7 @@ class DoctorController extends Controller
                 "details" => "doctor does not exist"
             ] , 404);
         }
-        $this->authorize("viewAny", Nurse::class);
+        $this->authorize("viewNurses", $doctor);
         $nurses = $doctor->nurses;
         $nurses_data = [];
         foreach ($nurses as $nurse) {
@@ -246,6 +252,7 @@ class DoctorController extends Controller
     /**
      * @OA\Get(
      *     path="/api/doctors/{id}/appointements",
+     *     tags={"Admin" , "Doctor"},
      *     @OA\Parameter(name="id" , description="doctor's id" , in="path"),
      *     @OA\Response(response="200", description="List all appointement for a specific doctor"),
      *     @OA\Response(response="404", description="doctor does not exist"),

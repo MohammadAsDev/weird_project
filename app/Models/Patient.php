@@ -28,6 +28,6 @@ class Patient extends Model
     }
 
     public function appointements() {
-        return $this->hasMany(Appointement::class , 'user_id' , 'patient_id');
+        return $this->hasMany(Appointement::class , 'patient_id' , 'user_id');
     }
 }

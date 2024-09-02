@@ -108,7 +108,7 @@ class ClinicController extends Controller
     /**
      * @OA\Get(
      *     path="/api/clinics",
-     *     tags: ["Admin"],
+     *     tags={"Admin"},
      *     @OA\Response(response="200", description="List all clinics"),
      *     @OA\Response(response="403", description="Not authorized"),
      * )
@@ -131,7 +131,7 @@ class ClinicController extends Controller
     /**
      * @OA\Get(
      *     path="/api/clinics/internal",
-     *     tags: ["Admin" , "Patient"],
+     *     tags={"Admin" , "Patient"},
      *     @OA\Response(response="200", description="List all internal clinics"),
      *     @OA\Response(response="403", description="Not authorized"),
      * )
@@ -155,10 +155,11 @@ class ClinicController extends Controller
     /**
      * @OA\Get(
      *     path="/api/clinics/internal/{id}",
-     *     tags: ["Admin" , "Patient"],
+     *     tags={"Admin" , "Patient"},
      *     @OA\Parameter(name="id", description="clinic's id" , in="path"),
      *     @OA\Response(response="200", description="List all internal clinics"),
      *     @OA\Response(response="403", description="Not authorized"),
+     *     @OA\Response(response="404", description="Clinic does not exist"),
      * )
      */
     public function readInternalClinic($id) {
@@ -179,7 +180,7 @@ class ClinicController extends Controller
     /**
      * @OA\Get(
      *     path="/api/clinics/external",
-     *     tags: ["Admin" , "Patient"],
+     *     tags={"Admin" , "Patient"},
      *     @OA\Response(response="200", description="List all external clinics"),
      *     @OA\Response(response="403", description="Not authorized"),
      * )
@@ -201,10 +202,11 @@ class ClinicController extends Controller
     /**
      * @OA\Get(
      *     path="/api/clinics/external/{id}",
-     *     tags: ["Admin" , "Patient"],
+     *     tags={"Admin" , "Patient"},
      *     @OA\Parameter(name="id", description="clinic's id" , in="path"),
      *     @OA\Response(response="200", description="List all external clinics"),
      *     @OA\Response(response="403", description="Not authorized"),
+     *     @OA\Response(response="404", description="Clinic does not exist"),
      * )
      */
     public function readExternalClinic($id) {
@@ -225,7 +227,7 @@ class ClinicController extends Controller
     /**
      * @OA\Post(
      *     path="/api/clinics/external",
-     *     tags: ["Admin"],
+     *     tags={"Admin"},
      *     @OA\Response(response="200", description="Create an external clinic"),
      *     @OA\Response(response="403", description="Not authorized"),
      *     @OA\Response(response="422", description="Invalid data"),
@@ -248,7 +250,7 @@ class ClinicController extends Controller
     /**
      * @OA\Post(
      *     path="/api/clinics/internal",
-     *     tags: ["Admin"],
+     *     tags={"Admin"},
      *     @OA\Response(response="200", description="Create an internal clinic"),
      *     @OA\Response(response="422", description="Invalid data"),
      *     @OA\Response(response="403", description="Not authorized"),
@@ -280,11 +282,12 @@ class ClinicController extends Controller
     /**
      * @OA\Put(
      *     path="/api/clinics/{id}",
-     *     tags: ["Admin"],
+     *     tags={"Admin"},
      *     @OA\Parameter(name="id", description="clinic's id" , in="path"),
      *     @OA\Response(response="200", description="Update a specific clinic"),
      *     @OA\Response(response="422", description="Invalid data"),
      *     @OA\Response(response="403", description="Not authorized"),
+     *     @OA\Response(response="404", description="Clinic does not exist"),
      * )
      */
     public function update(ClinicForm $request, $id) {
@@ -308,11 +311,12 @@ class ClinicController extends Controller
     /**
      * @OA\Delete(
      *     path="/api/clinics/{id}",
-     *     tags: ["Admin"],
+     *     tags={"Admin"},
      *     @OA\Parameter(name="id", description="clinic's id" , in="path"),
      *     @OA\Response(response="200", description="Update a specific clinic"),
      *     @OA\Response(response="422", description="Invalid data"),
      *     @OA\Response(response="403", description="Not authorized"),
+     *     @OA\Response(response="404", description="Clinic does not exist"),
      * )
      */
     public function delete($id) {
@@ -327,6 +331,36 @@ class ClinicController extends Controller
         return response()->json([] , 204);
     }
 
+
+    /**
+     * @OA\Get(
+     *     path="/api/clinics/{id}/appointements",
+     *     tags={"Admin" , "Doctor"},
+     *     @OA\Parameter(name="id", description="clinic's id" , in="path"),
+     *     @OA\Response(response="200", description="List all appointements for a specific clinic"),
+     *     @OA\Response(response="403", description="Not authorized"),
+     *     @OA\Response(response="404", description="Clinic does not exist"),
+     * )
+     */
+    public function appointements($id) {
+        $clinic = Clinic::where("id" , $id)->first();
+        if ( $clinic == null ) {
+            return response()->json([
+                "details" => "clinic does not exist"
+            ], 404);
+        }
+        $this->authorize("viewAppointements" , $clinic);
+        $response_data = [];
+        $appointements = $clinic->appointements;
+        foreach ( $appointements  as $appointement ) {
+            array_push($response_data , Controller::formatData(
+                $appointement,
+                AppointementController::ALL_APPOINTMENT_INDEX_RESPONSE_FORMAT
+            ));
+        }
+        return response()->json($this->paginate($response_data));
+    }
+    
     public function paginate($items, $perPage = 5, $page = null, $options = []) {
         $page = $page ?: (Paginator::resolveCurrentPage() ?: 1);
         $items = $items instanceof Collection ? $items : Collection::make($items);

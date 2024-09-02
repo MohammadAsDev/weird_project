@@ -43,7 +43,7 @@ class NurseForm extends FormRequest
                 'phone_number' => 'required|unique:users|regex:/^0[0-9]{9}/', 
                 'short_description' => "required|string|max:500",
                 'address' => "required|string|max:100|min:2",
-                'departement_id' => "required|integer",
+                // 'departement_id' => "required|integer",
                 'doctor_id' => "required|integer",
 
                 'gender' => [
@@ -53,6 +53,7 @@ class NurseForm extends FormRequest
                 ],
 
                 'birth_date' => [
+                    'required',
                     'date',
                     'string',
                     new BirthYearRule(),

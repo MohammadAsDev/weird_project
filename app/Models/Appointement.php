@@ -25,8 +25,8 @@ class Appointement extends Model
 
     protected $casts = [
         'status' => AppointementStatus::class,
-        'date' => 'datetime',
-        'next_date' => 'datetime',
+        'date' => 'datetime:Y-m-d H:i:s',
+        'next_date' => 'datetime:datetime:Y-m-d H:i:s',
     ];
 
     public function patient() {

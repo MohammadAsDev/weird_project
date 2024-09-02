@@ -32,6 +32,6 @@ class Clinic extends Model
     }
 
     public function appointements() {
-        return $this->hasMany(Appointement::class , "patient_id", "user_id");
+        return $this->hasMany(Appointement::class , "clinic_id", "id");
     }
 }

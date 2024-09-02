@@ -6,6 +6,7 @@ use App\Enums\Role;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Doctors\DoctorController;
 use App\Http\Requests\NurseForm;
+use App\Models\Departement;
 use App\Models\Doctor;
 use App\Models\Nurse;
 use App\Models\User;
@@ -30,6 +31,7 @@ class NurseController extends Controller
             "profile_picture_path" => "profile_picture_path",
         ],
 
+        "doctor_id" => "doctor_id",
         "departement_id" => "departement_id",
         "specialization" => "specialization",
         "short_description" => "short_description",
@@ -50,7 +52,7 @@ class NurseController extends Controller
             "birth_date" => "birth_date",
             "profile_picture_path" => "profile_picture_path"
         ],
-
+        "doctor_id" => "doctor_id",
         "departement" => "departement",
         "specialization" => "specialization",
         "short_description" => "short_description",
@@ -75,9 +77,11 @@ class NurseController extends Controller
     /**
      * @OA\Post(
      *     path="/api/nurses",
+     *     tags={"Admin"},
      *     @OA\Response(response="200", description="Create new nurse"),
      *     @OA\Response(response="403", description="Not authorized"),
      *     @OA\Response(response="422", description="Invalid data"),
+     *     @OA\Response(response="404", description="Selected departement does not exist"),
      * )
      */
     protected function create(NurseForm $request) {
@@ -87,11 +91,34 @@ class NurseController extends Controller
         $user_data = Arr::except($validated , ['rate' , 'short_description']);
         $user_data = array_merge($user_data , ["role_id" => Role::NURSE->value]);
 
+        $departement = 
+            Departement::where("id" , $validated["departement_id"])
+            ->first();
+
+        if ( $departement == null ) {
+            return response()->json([
+                "details" => "selected departement does not exist"
+            ],404);
+        }
+
+        $doctor = 
+            Doctor::where("user_id" , $validated["doctor_id"])
+            ->first();
+
+        if ( $doctor == null ) {
+            return response()->json([
+                "details" => "selected doctor does not exist"
+            ],404);
+        }   
+
         $user = User::create($user_data);
         Nurse::create([
             'user_id' => $user->id,
             'rate' => $validated['rate'],
-            'short_description' => $validated['short_description']
+            'specialization' => $validated['specialization'],
+            'short_description' => $validated['short_description'],
+            "departement_id" => $validated['departement_id'],
+            "doctor_id" => $validated["doctor_id"]
         ]);
 
         return response()->json([
@@ -104,6 +131,7 @@ class NurseController extends Controller
     /**
      * @OA\Get(
      *     path="/api/nurses/{id}",
+     *     tags={"Admin"},
      *     @OA\Parameter(name="id", description="nurse's id" , in="path"),
      *     @OA\Response(response="200", description="Read a specifc nurse"),
      *     @OA\Response(response="403", description="Not authorized"),
@@ -128,6 +156,7 @@ class NurseController extends Controller
     /**
      * @OA\Put(
      *     path="/api/nurses/{id}",
+     *     tags={"Admin"},
      *     @OA\Parameter(name="id", description="nurse's id" , in="path"),
      *     @OA\Response(response="200", description="Update a specifc nurse"),
      *     @OA\Response(response="403", description="Not authorized"),
@@ -163,6 +192,7 @@ class NurseController extends Controller
     /**
      * @OA\Delete(
      *     path="/api/nurses/{id}",
+     *     tags={"Admin"},
      *     @OA\Parameter(name="id", description="nurse's id" , in="path"),
      *     @OA\Response(response="204", description="Delete a specific nurse"),
      *     @OA\Response(response="403", description="Not authorized"),
@@ -188,6 +218,7 @@ class NurseController extends Controller
     /**
      * @OA\GET(
      *     path="/api/nurses/",
+     *     tags={"Admin"},
      *     @OA\Response(response="200", description="List all nurses"),
      *     @OA\Response(response="403", description="Not authorized"),
      * )
@@ -210,22 +241,6 @@ class NurseController extends Controller
         );
     }
 
-    protected function doctor($id) {
-        $this->authorize("viewAny" , Doctor::class);
-        $nurse = Nurse::where("user_id" , $id)->first();
-        if ( $nurse == null ) {
-            return response()->json([
-                "details" => "nurse does not exist"
-            ],404);
-        }
-        
-        return response()->json(
-            Controller::formatData(
-                $nurse->doctor , 
-                DoctorController::ADMIN_READ_RESPONSE_FORMAT
-            )
-        );
-    }
 
     
     public function paginate($items, $perPage = 5, $page = null, $options = [])

@@ -2,7 +2,7 @@
 
 namespace App\Rules;
 
-use App\Enums\DoctorSpecialization;
+use App\Enums\MedicalSpecialization;
 use Illuminate\Contracts\Validation\Rule;
 
 class DoctorSpecRule implements Rule
@@ -26,7 +26,7 @@ class DoctorSpecRule implements Rule
      */
     public function passes($attribute, $value)
     {
-        return in_array($value , array_column(DoctorSpecialization::cases() , "value"));
+        return in_array($value , array_column(MedicalSpecialization::cases() , "value"));
     }
 
     /**
@@ -36,6 +36,6 @@ class DoctorSpecRule implements Rule
      */
     public function message()
     {
-        return 'Doctor specialization is not specified';
+        return 'Medical specialization is not specified';
     }
 }

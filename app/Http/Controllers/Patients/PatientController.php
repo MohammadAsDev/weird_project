@@ -9,6 +9,7 @@ use App\Http\Requests\PatientForm;
 use App\Http\Requests\PreCheckForm;
 use App\Models\Patient;
 use App\Models\User;
+use Error;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
@@ -66,6 +67,7 @@ class PatientController extends Controller
     /**
      * @OA\Post(
      *     path="/api/patients",
+     *     tags={"Anonymous"},
      *     @OA\Response(response="200", description="Create new patient"),
      *     @OA\Response(response="403", description="Not authorized"),
      *     @OA\Response(response="422", description="Invalid data"),
@@ -89,6 +91,7 @@ class PatientController extends Controller
     /**
      * @OA\Get(
      *     path="/api/patients/{id}",
+     *     tags={"Admin"},
      *     @OA\Parameter(name="id", description="patient's id" , in="path"),
      *     @OA\Response(response="200", description="Read a specifc patient"),
      *     @OA\Response(response="403", description="Not authorized"),
@@ -115,6 +118,7 @@ class PatientController extends Controller
     /**
      * @OA\Put(
      *     path="/api/patients/{id}",
+     *     tags={"Admin"},
      *     @OA\Parameter(name="id", description="patient's id" , in="path"),
      *     @OA\Response(response="200", description="Update a specifc patient"),
      *     @OA\Response(response="403", description="Not authorized"),
@@ -132,12 +136,12 @@ class PatientController extends Controller
         $this->authorize('update' , $patient);
 
         $validated = $request->validated();
-        $user_data = Arr::except($validated , ['blood_type' , 'illness_description']);
+        $user_data = Arr::except($validated , ['blood_type' , 'aspirin_allergy']);
 
         $patient->user->update($user_data);
         $patient->update([
             "blood_type" => $validated["blood_type"] ?? $patient->blood_type,
-            "illness_description" => $validated["illness_description"] ?? $patient->illness_description
+            "aspirin_allergy" => $validated["aspirin_allergy"] ?? $patient->aspirin_allergy
         ]);
 
 
@@ -153,6 +157,7 @@ class PatientController extends Controller
     /**
      * @OA\Delete(
      *     path="/api/patients/{id}",
+     *     tags={"Admin"},
      *     @OA\Parameter(name="id", description="patient's id" , in="path"),
      *     @OA\Response(response="204", description="Delete a specifc patient"),
      *     @OA\Response(response="403", description="Not authorized"),
@@ -178,6 +183,7 @@ class PatientController extends Controller
     /**
      * @OA\Get(
      *     path="/api/patients",
+     *     tags={"Admin"},
      *     @OA\Response(response="200", description="List all patients"),
      *     @OA\Response(response="403", description="Not authorized"),
      * )
@@ -202,6 +208,7 @@ class PatientController extends Controller
     /**
      * @OA\Get(
      *     path="/api/patients/{id}/appointements",
+     *     tags={"Patient" , "Admin"},
      *     @OA\Parameter(name="id", description="patient's id" , in="path"),
      *     @OA\Response(response="200", description="List all appointements for a patient"),
      *     @OA\Response(response="403", description="Not authorized"),
@@ -215,7 +222,7 @@ class PatientController extends Controller
                 "details" => "patient does not exist"
             ] , 404);
         }
-        $this->authorize("viewAppointements" , Patient::class);
+        $this->authorize("viewAppointements" , $patient);
         $appointements = $patient->appointements;
         return response()->json($this->paginate($appointements));
     }
@@ -224,6 +231,7 @@ class PatientController extends Controller
     /**
      * @OA\Get(
      *     path="/api/patients/prechecks",
+     *     tags={"Admin"},
      *     @OA\Response(response="200", description="List all patients without precheck"),
      *     @OA\Response(response="403", description="Not authorized"),
      * )
@@ -232,8 +240,7 @@ class PatientController extends Controller
         $this->authorize("viewAny" , Patient::class);
 
         $unregistered_patients = 
-        DB::table('users')->
-        where("users.role_id" , "=" , Role::PATIENT->value)->
+        User::where("users.role_id" , "=" , Role::PATIENT->value)->
         whereNotIn("id" , function($query) {
             $query->select("user_id")->from("patients")->get();
         })->get();
@@ -260,6 +267,7 @@ class PatientController extends Controller
     /**
      * @OA\Post(
      *     path="/api/patients/prechecks",
+     *     tags={"Admin"},
      *     @OA\Response(response="200", description="Create a precheck for a patient"),
      *     @OA\Response(response="403", description="Not authorized"),
      *     @OA\Response(response="422", description="Invalid data"),

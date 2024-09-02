@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Rules\BirthYearRule;
+use App\Rules\BloodTypeRule;
 use App\Rules\GenderRule;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -47,6 +48,7 @@ class PatientForm extends FormRequest
                 ],
 
                 'birth_date' => [
+                    'required',
                     'date',
                     'string',
                     new BirthYearRule(),
@@ -63,7 +65,14 @@ class PatientForm extends FormRequest
                 'password' => "string|max:500|min:9",
                 'phone_number' => 'unique:users|regex:/^0[0-9]{9}/', 
                 'address' => "string|max:100|min:2",
+                'ssn' => "string|unique:users|regex:/[0-9]{11}/",
+                'aspirin_allergy' => "boolean",
                 
+                'blood_type' => [
+                    'integer',
+                    new BloodTypeRule(),
+                ] , 
+
                 'gender' => [
                     "integer",
                     new GenderRule()
@@ -73,9 +82,6 @@ class PatientForm extends FormRequest
                     'string',
                     new BirthYearRule(),
                 ],
-
-                'ssn' => "required|string|unique:users|regex:/[0-9]{11}/",
-
             ];
         }
     }

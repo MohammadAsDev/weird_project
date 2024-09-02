@@ -45,6 +45,18 @@ class ClinicPolicy
     }
 
     /**
+     * Determine whether the user can view the model.
+     *
+     * @param  \App\Models\User  $user
+     * @param  \App\Models\Clinic  $clinic
+     * @return \Illuminate\Auth\Access\Response|bool
+     */
+    public function viewAppointements(User $user, Clinic $clinic) { // patients should have access to all clinics
+        $owner_id = $clinic->doctor_id;
+        return $owner_id == $user->id || $this->isAdminOrStaff($user);
+    }
+
+    /**
      * Determine whether the user can create models.
      *
      * @param  \App\Models\User  $user

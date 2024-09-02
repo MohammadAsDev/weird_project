@@ -9,8 +9,610 @@
         "version": "1.0"
     },
     "paths": {
+        "/api/appointments": {
+            "get": {
+                "tags": [
+                    "Admin"
+                ],
+                "operationId": "05ed1b0de05736fbe5d72984be3f7122",
+                "responses": {
+                    "200": {
+                        "description": "List all apointements"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    }
+                }
+            }
+        },
+        "/api/appointements/me": {
+            "get": {
+                "tags": [
+                    "Patient"
+                ],
+                "operationId": "3af8c491accf4847907c9d51844d2b74",
+                "responses": {
+                    "200": {
+                        "description": "List all appointments for the current patient"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    }
+                }
+            }
+        },
+        "/api/appointements/me/{id}": {
+            "get": {
+                "tags": [
+                    "Patient"
+                ],
+                "operationId": "b91f7769caf7d8fb4ac60df983d9f338",
+                "responses": {
+                    "200": {
+                        "description": "Get a specific appointment for the current patient"
+                    },
+                    "404": {
+                        "description": "Appointement does not exist"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    }
+                }
+            }
+        },
+        "/api/appointements/patients": {
+            "get": {
+                "tags": [
+                    "Doctor"
+                ],
+                "operationId": "2416630e59b6252a838ffa28af8d591d",
+                "responses": {
+                    "200": {
+                        "description": "List all appointements for the current doctor"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    }
+                }
+            }
+        },
+        "/api/appointements/patients/{id}": {
+            "get": {
+                "tags": [
+                    "Doctor"
+                ],
+                "operationId": "9f8652d24613b9895f2cdcba151320c1",
+                "responses": {
+                    "404": {
+                        "description": "Patient does not exist"
+                    },
+                    "200": {
+                        "description": "Read a specific appointement for the current doctor"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Doctor"
+                ],
+                "operationId": "f2d0bc4952fecb28531b0cb34cf57c9f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "clinic's id"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "sumbit appointement status"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    },
+                    "422": {
+                        "description": "Invalid data"
+                    },
+                    "404": {
+                        "description": "Patient does not exist"
+                    }
+                }
+            }
+        },
+        "/api/appointements/": {
+            "post": {
+                "tags": [
+                    "Patient"
+                ],
+                "operationId": "b0f67b4bfb5032e6729f43a1fd2a7139",
+                "responses": {
+                    "200": {
+                        "description": "Create a new appointement"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    },
+                    "422": {
+                        "description": "Invalid data"
+                    }
+                }
+            }
+        },
+        "/api/appointements/clinics/{id}": {
+            "get": {
+                "tags": [
+                    "Patient"
+                ],
+                "operationId": "4b612c53dbe00da4b3bf82620c5b4dfc",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "clinic's id"
+                    },
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "description": "appointements period"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List all appointements for a specific clinic"
+                    },
+                    "404": {
+                        "description": "Clinic does not exist"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    }
+                }
+            }
+        },
+        "/api/appointements/doctors/{id}": {
+            "get": {
+                "tags": [
+                    "Patient"
+                ],
+                "operationId": "6e65dbcfd7a69ae51e143a922ac8d112",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "doctor's id"
+                    },
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "description": "appointements period"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List all appointements for a specific doctor"
+                    },
+                    "404": {
+                        "description": "Doctor does not exist"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    }
+                }
+            }
+        },
+        "/api/clinics": {
+            "get": {
+                "tags": [
+                    "Admin"
+                ],
+                "operationId": "dab93c930a17b3b823e8febfca5512f4",
+                "responses": {
+                    "200": {
+                        "description": "List all clinics"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    }
+                }
+            }
+        },
+        "/api/clinics/internal": {
+            "get": {
+                "tags": [
+                    "Admin",
+                    "Patient"
+                ],
+                "operationId": "2d971692246cce2eaf7a411b90a94cc1",
+                "responses": {
+                    "200": {
+                        "description": "List all internal clinics"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Admin"
+                ],
+                "operationId": "53bf2ed158889d4ed17d4b7cb0a1257d",
+                "responses": {
+                    "200": {
+                        "description": "Create an internal clinic"
+                    },
+                    "422": {
+                        "description": "Invalid data"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    }
+                }
+            }
+        },
+        "/api/clinics/internal/{id}": {
+            "get": {
+                "tags": [
+                    "Admin",
+                    "Patient"
+                ],
+                "operationId": "9eff6b505528e41d9e4d086cfc5a603e",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "clinic's id"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List all internal clinics"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    },
+                    "404": {
+                        "description": "Clinic does not exist"
+                    }
+                }
+            }
+        },
+        "/api/clinics/external": {
+            "get": {
+                "tags": [
+                    "Admin",
+                    "Patient"
+                ],
+                "operationId": "fe0b4869ca5a7eae7b5854c7ce37dccc",
+                "responses": {
+                    "200": {
+                        "description": "List all external clinics"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Admin"
+                ],
+                "operationId": "502cc401cadb8a8ab5bf6c7c2bf0867a",
+                "responses": {
+                    "200": {
+                        "description": "Create an external clinic"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    },
+                    "422": {
+                        "description": "Invalid data"
+                    }
+                }
+            }
+        },
+        "/api/clinics/external/{id}": {
+            "get": {
+                "tags": [
+                    "Admin",
+                    "Patient"
+                ],
+                "operationId": "d9315e7f8a9917805286b6b0ee815661",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "clinic's id"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List all external clinics"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    },
+                    "404": {
+                        "description": "Clinic does not exist"
+                    }
+                }
+            }
+        },
+        "/api/clinics/{id}": {
+            "put": {
+                "tags": [
+                    "Admin"
+                ],
+                "operationId": "cb085934598878f78c44c00a3b646f75",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "clinic's id"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Update a specific clinic"
+                    },
+                    "422": {
+                        "description": "Invalid data"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    },
+                    "404": {
+                        "description": "Clinic does not exist"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Admin"
+                ],
+                "operationId": "81d8ea6e110c53f32907b3e5d7e92718",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "clinic's id"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Update a specific clinic"
+                    },
+                    "422": {
+                        "description": "Invalid data"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    },
+                    "404": {
+                        "description": "Clinic does not exist"
+                    }
+                }
+            }
+        },
+        "/api/clinics/{id}/appointements": {
+            "get": {
+                "tags": [
+                    "Admin",
+                    "Doctor"
+                ],
+                "operationId": "4d322128816274e6d08467b5d0ae77eb",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "clinic's id"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List all appointements for a specific clinic"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    },
+                    "404": {
+                        "description": "Clinic does not exist"
+                    }
+                }
+            }
+        },
+        "/api/departements": {
+            "post": {
+                "tags": [
+                    "Admin"
+                ],
+                "operationId": "eb2ab5cf172d0f316307ab753f0fc0a2",
+                "responses": {
+                    "200": {
+                        "description": "Create new departement"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    },
+                    "422": {
+                        "description": "Invalid data"
+                    }
+                }
+            }
+        },
+        "/api/departements/{id}": {
+            "get": {
+                "tags": [
+                    "Admin"
+                ],
+                "operationId": "2912c359cf4f38e4d730dabd9d369c47",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "departement's id"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Read a specifc departement"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    },
+                    "404": {
+                        "description": "Nurse does not exist"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Admin"
+                ],
+                "operationId": "814ea949a31fd9517f40a0b1db981f5d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "departement's id"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Update a specifc departement"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    },
+                    "404": {
+                        "description": "Departement does not exist"
+                    },
+                    "422": {
+                        "description": "Invalid data"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Admin"
+                ],
+                "operationId": "89a8d017095f68ba5d4dafe15ee3c52b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "departement's id"
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Delete a specific departement"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    },
+                    "404": {
+                        "description": "Departement does not exist"
+                    }
+                }
+            }
+        },
+        "/api/departements/": {
+            "get": {
+                "tags": [
+                    "Admin"
+                ],
+                "operationId": "fc888e16dc93308e4e5b9e304d71b547",
+                "responses": {
+                    "200": {
+                        "description": "List all departements"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    }
+                }
+            }
+        },
+        "/api/departements/{id}/doctors/": {
+            "get": {
+                "tags": [
+                    "Admin"
+                ],
+                "operationId": "067bfe6e3147234b48878eb772d85938",
+                "responses": {
+                    "200": {
+                        "description": "List all doctors in a specifc departement"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    },
+                    "404": {
+                        "description": "Departement does not exist"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Admin"
+                ],
+                "operationId": "473acaafccf45121dcdc6d0a234435b5",
+                "responses": {
+                    "200": {
+                        "description": "Create a doctor in a specifc departement"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    },
+                    "404": {
+                        "description": "Departement does not exist"
+                    }
+                }
+            }
+        },
+        "/api/departements/{id}/nurses/": {
+            "get": {
+                "tags": [
+                    "Admin"
+                ],
+                "operationId": "339031d29bf53aaccfe3be8b7b02e909",
+                "responses": {
+                    "200": {
+                        "description": "List all nurses in a specifc departement"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    },
+                    "404": {
+                        "description": "Departement does not exist"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Admin"
+                ],
+                "operationId": "f034f1871a0481de2c8a740a5dc6cc45",
+                "responses": {
+                    "200": {
+                        "description": "Create a nurse in a specifc departement"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    },
+                    "404": {
+                        "description": "Departement does not exist"
+                    }
+                }
+            }
+        },
         "/api/doctors": {
             "post": {
+                "tags": [
+                    "Admin"
+                ],
                 "operationId": "778cd8ef0df19697e8553802414a0ce3",
                 "responses": {
                     "200": {
@@ -27,6 +629,9 @@
         },
         "/api/doctors/{id}": {
             "get": {
+                "tags": [
+                    "Admin"
+                ],
                 "operationId": "2d1ea8de3399eb5521a7b1911cb8d0a5",
                 "parameters": [
                     {
@@ -48,6 +653,9 @@
                 }
             },
             "put": {
+                "tags": [
+                    "Admin"
+                ],
                 "operationId": "748146ca7b4e017dd45916d9808c64eb",
                 "parameters": [
                     {
@@ -72,6 +680,9 @@
                 }
             },
             "delete": {
+                "tags": [
+                    "Admin"
+                ],
                 "operationId": "b6f107e9241d642eefe4a38b2e772b1b",
                 "parameters": [
                     {
@@ -95,10 +706,66 @@
         },
         "/api/doctors/": {
             "get": {
+                "tags": [
+                    "Admin"
+                ],
                 "operationId": "d6afe32129dcc40d6586f59afb835775",
                 "responses": {
                     "200": {
-                        "description": "List all users"
+                        "description": "List all doctors"
+                    },
+                    "403": {
+                        "description": "Not Authorized"
+                    }
+                }
+            }
+        },
+        "/api/doctors/{id}/nurses": {
+            "get": {
+                "tags": [
+                    "Admin"
+                ],
+                "operationId": "cc3ce968b1d3ff1714f56d92c66c6bfa",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "doctor's id"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List all nurses working with a specific doctor"
+                    },
+                    "404": {
+                        "description": "doctor does not exist"
+                    },
+                    "403": {
+                        "description": "Not Authorized"
+                    }
+                }
+            }
+        },
+        "/api/doctors/{id}/appointements": {
+            "get": {
+                "tags": [
+                    "Admin",
+                    "Doctor"
+                ],
+                "operationId": "86b124cb6260fb18ffb66efa98c046e3",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "doctor's id"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List all appointement for a specific doctor"
+                    },
+                    "404": {
+                        "description": "doctor does not exist"
                     },
                     "403": {
                         "description": "Not Authorized"
@@ -108,6 +775,9 @@
         },
         "/api/nurses": {
             "post": {
+                "tags": [
+                    "Admin"
+                ],
                 "operationId": "c2055b1ac04eef2dfe81aebb3bc0e271",
                 "responses": {
                     "200": {
@@ -118,12 +788,18 @@
                     },
                     "422": {
                         "description": "Invalid data"
+                    },
+                    "404": {
+                        "description": "Selected departement does not exist"
                     }
                 }
             }
         },
         "/api/nurses/{id}": {
             "get": {
+                "tags": [
+                    "Admin"
+                ],
                 "operationId": "d29d7f2faf300acfb73228c393ce5f02",
                 "parameters": [
                     {
@@ -145,6 +821,9 @@
                 }
             },
             "put": {
+                "tags": [
+                    "Admin"
+                ],
                 "operationId": "ebac9466bcfbff6eebcf17131885fbe0",
                 "parameters": [
                     {
@@ -169,6 +848,9 @@
                 }
             },
             "delete": {
+                "tags": [
+                    "Admin"
+                ],
                 "operationId": "e515fbde4842f1a833d959a064d1a335",
                 "parameters": [
                     {
@@ -186,15 +868,15 @@
                     },
                     "404": {
                         "description": "Nurse does not exist"
-                    },
-                    "422": {
-                        "description": "Invalid data"
                     }
                 }
             }
         },
         "/api/nurses/": {
             "get": {
+                "tags": [
+                    "Admin"
+                ],
                 "operationId": "5f062e2fe00876769f90939919038ad8",
                 "responses": {
                     "200": {
@@ -207,11 +889,28 @@
             }
         },
         "/api/patients": {
+            "get": {
+                "tags": [
+                    "Admin"
+                ],
+                "operationId": "8575b8b1319732e373f6179c0794dd85",
+                "responses": {
+                    "200": {
+                        "description": "List all patients"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    }
+                }
+            },
             "post": {
+                "tags": [
+                    "Anonymous"
+                ],
                 "operationId": "6dde96a3a53830095dfa7f819d88c01d",
                 "responses": {
                     "200": {
-                        "description": "Create new nurse"
+                        "description": "Create new patient"
                     },
                     "403": {
                         "description": "Not authorized"
@@ -224,6 +923,9 @@
         },
         "/api/patients/{id}": {
             "get": {
+                "tags": [
+                    "Admin"
+                ],
                 "operationId": "22d08e5654f09834890e0f816195c499",
                 "parameters": [
                     {
@@ -245,6 +947,9 @@
                 }
             },
             "put": {
+                "tags": [
+                    "Admin"
+                ],
                 "operationId": "28ae1f909d4af3faa995a44981762d90",
                 "parameters": [
                     {
@@ -269,6 +974,9 @@
                 }
             },
             "delete": {
+                "tags": [
+                    "Admin"
+                ],
                 "operationId": "6393eaff93f8d6f225396ff5f66c8407",
                 "parameters": [
                     {
@@ -289,6 +997,66 @@
                     }
                 }
             }
+        },
+        "/api/patients/{id}/appointements": {
+            "get": {
+                "tags": [
+                    "Patient",
+                    "Admin"
+                ],
+                "operationId": "e092e02fcc9fa89b797ab569f4665b2f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "patient's id"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List all appointements for a patient"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    },
+                    "422": {
+                        "description": "Invalid data"
+                    }
+                }
+            }
+        },
+        "/api/patients/prechecks": {
+            "get": {
+                "tags": [
+                    "Admin"
+                ],
+                "operationId": "96d75b8a7adfe7e9567ebd1f1f0e7a55",
+                "responses": {
+                    "200": {
+                        "description": "List all patients without precheck"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Admin"
+                ],
+                "operationId": "6305f902729d5266b24c75a3e59d4866",
+                "responses": {
+                    "200": {
+                        "description": "Create a precheck for a patient"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    },
+                    "422": {
+                        "description": "Invalid data"
+                    }
+                }
+            }
         }
     },
     "components": {
@@ -299,5 +1067,23 @@
                 "scheme": "bearer"
             }
         }
-    }
+    },
+    "tags": [
+        {
+            "name": "Admin",
+            "description": "Admin"
+        },
+        {
+            "name": "Patient",
+            "description": "Patient"
+        },
+        {
+            "name": "Doctor",
+            "description": "Doctor"
+        },
+        {
+            "name": "Anonymous",
+            "description": "Anonymous"
+        }
+    ]
 }

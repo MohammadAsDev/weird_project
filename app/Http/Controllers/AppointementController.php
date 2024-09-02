@@ -9,12 +9,10 @@ use App\Models\Appointement;
 use App\Models\Clinic;
 use App\Models\Doctor;
 use Carbon\Carbon;
-use Error;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
-use Illuminate\Support\Facades\Http;
 
 class AppointementController extends Controller
 {
@@ -80,9 +78,9 @@ class AppointementController extends Controller
 
     private function checkDateValidation($appointements_list , $date) { // need more work
         // $date = date_create($date);
-        $date = Carbon::createFromFormat("Y-m-d H:m:s" , $date);
+        $date = Carbon::createFromFormat("Y-m-d H:i:s" , $date);
         foreach ($appointements_list as $appointement) {
-            $appointement_date = Carbon::createFromFormat("Y-m-d H:m:S.i" , $appointement["date"]);
+            $appointement_date = Carbon::createFromFormat("Y-m-d H:i:s" , $appointement["date"]);
             $diff = $date->diffInMinutes($appointement_date);
             if ( $diff <= 60 ) {
                 return false;
@@ -95,7 +93,7 @@ class AppointementController extends Controller
     /**
      * @OA\Get(
      *     path="/api/appointments",
-     *     tags: ["Admin"],
+     *     tags= {"Admin"},
      *     @OA\Response(response="200", description="List all apointements"),
      *     @OA\Response(response="403", description="Not authorized"),
      * )
@@ -120,7 +118,7 @@ class AppointementController extends Controller
     /**
      * @OA\Get(
      *     path="/api/appointements/me",
-     *     tags: ["Patient"],
+     *     tags={"Patient"},
      *     @OA\Response(response="200", description="List all appointments for the current patient"),
      *     @OA\Response(response="403", description="Not authorized"),
      * )
@@ -145,7 +143,7 @@ class AppointementController extends Controller
     /**
      * @OA\Get(
      *     path="/api/appointements/me/{id}",
-     *     tags: ["Patient"],
+     *     tags={"Patient"},
      *     @OA\Response(response="200", description="Get a specific appointment for the current patient"),
      *     @OA\Response(response="404", description="Appointement does not exist"),
      *     @OA\Response(response="403", description="Not authorized"),
@@ -178,7 +176,7 @@ class AppointementController extends Controller
     /**
      * @OA\Get(
      *     path="/api/appointements/patients",
-     *     tags: ["Doctor"],
+     *     tags={"Doctor"},
      *     @OA\Response(response="200", description="List all appointements for the current doctor"),
      *     @OA\Response(response="403", description="Not authorized"),
      * )
@@ -203,7 +201,7 @@ class AppointementController extends Controller
     /**
      * @OA\Get(
      *     path="/api/appointements/patients/{id}",
-     *     tags: ["Doctor"],
+     *     tags={"Doctor"},
      *     @OA\Response(response="404", description="Patient does not exist"),
      *     @OA\Response(response="200", description="Read a specific appointement for the current doctor"),
      *     @OA\Response(response="403", description="Not authorized"),
@@ -236,7 +234,7 @@ class AppointementController extends Controller
     /**
      * @OA\Post(
      *     path="/api/appointements/",
-     *     tags: ["Patient"],
+     *     tags={"Patient"},
      *     @OA\Response(response="200", description="Create a new appointement"),
      *     @OA\Response(response="403", description="Not authorized"),
      *     @OA\Response(response="422", description="Invalid data"),
@@ -264,7 +262,8 @@ class AppointementController extends Controller
      * @OA\Get(
      *     path="/api/appointements/clinics/{id}",
      *     @OA\Parameter(name="id", description="clinic's id" , in="path"),
-     *     tags: ["Patient"],
+     *     @OA\Parameter(name="period", description="appointements period" , in="query"),
+     *     tags={"Patient"},
      *     @OA\Response(response="200", description="List all appointements for a specific clinic"),
      *     @OA\Response(response="404", description="Clinic does not exist"),
      *     @OA\Response(response="403", description="Not authorized"),
@@ -301,7 +300,8 @@ class AppointementController extends Controller
      * @OA\Get(
      *     path="/api/appointements/doctors/{id}",
      *     @OA\Parameter(name="id", description="doctor's id" , in="path"),
-     *     tags: ["Patient"],
+     *     @OA\Parameter(name="period", description="appointements period" , in="query"),
+     *     tags={"Patient"},
      *     @OA\Response(response="200", description="List all appointements for a specific doctor"),
      *     @OA\Response(response="404", description="Doctor does not exist"),
      *     @OA\Response(response="403", description="Not authorized"),
@@ -340,7 +340,7 @@ class AppointementController extends Controller
      * @OA\Put(
      *     path="/api/appointements/patients/{id}",
      *     @OA\Parameter(name="id", description="clinic's id" , in="path"),
-     *     tags: ["Doctor"],
+     *     tags={"Doctor"},
      *     @OA\Response(response="200", description="sumbit appointement status"),
      *     @OA\Response(response="403", description="Not authorized"),
      *     @OA\Response(response="422", description="Invalid data"),

@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\DoctorSpecialization;
 use App\Enums\MedicalSpecialization;
 use App\Enums\Rate;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -18,8 +17,7 @@ class Doctor extends Model
         'rate',
         'short_description',
     ];
-
-    protected $primayKey = "user_id";
+    protected $primaryKey = "user_id";
     public $incrementing = False;
 
     protected $casts = [
@@ -40,6 +38,6 @@ class Doctor extends Model
     }
 
     public function appointements() {
-        return $this->hasMany(Appointement::class , "user_id" , "doctor_id");
+        return $this->hasMany(Appointement::class , "doctor_id" , "user_id");
     }
 }

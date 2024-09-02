@@ -2,8 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\MedicalSpecialization;
-use App\Enums\Rate;
 use App\Enums\Role;
 use App\Http\Controllers\Doctors\DoctorController;
 use App\Http\Controllers\Nurses\NurseController;
@@ -60,6 +58,7 @@ class DepartementController extends Controller
     /**
      * @OA\Post(
      *     path="/api/departements",
+     *     tags={"Admin"},
      *     @OA\Response(response="200", description="Create new departement"),
      *     @OA\Response(response="403", description="Not authorized"),
      *     @OA\Response(response="422", description="Invalid data"),
@@ -82,6 +81,7 @@ class DepartementController extends Controller
     /**
      * @OA\Get(
      *     path="/api/departements/{id}",
+     *     tags={"Admin"},
      *     @OA\Parameter(name="id", description="departement's id" , in="path"),
      *     @OA\Response(response="200", description="Read a specifc departement"),
      *     @OA\Response(response="403", description="Not authorized"),
@@ -103,6 +103,7 @@ class DepartementController extends Controller
     /**
      * @OA\Put(
      *     path="/api/departements/{id}",
+     *     tags={"Admin"},
      *     @OA\Parameter(name="id", description="departement's id" , in="path"),
      *     @OA\Response(response="200", description="Update a specifc departement"),
      *     @OA\Response(response="403", description="Not authorized"),
@@ -128,6 +129,7 @@ class DepartementController extends Controller
     /**
      * @OA\Delete(
      *     path="/api/departements/{id}",
+     *     tags={"Admin"},
      *     @OA\Parameter(name="id", description="departement's id" , in="path"),
      *     @OA\Response(response="204", description="Delete a specific departement"),
      *     @OA\Response(response="403", description="Not authorized"),
@@ -151,6 +153,7 @@ class DepartementController extends Controller
     /**
      * @OA\GET(
      *     path="/api/departements/",
+     *     tags={"Admin"},
      *     @OA\Response(response="200", description="List all departements"),
      *     @OA\Response(response="403", description="Not authorized"),
      * )
@@ -166,6 +169,7 @@ class DepartementController extends Controller
     /**
      * @OA\Post(
      *     path="/api/departements/{id}/doctors/",
+     *     tags={"Admin"},
      *     @OA\Response(response="200", description="Create a doctor in a specifc departement"),
      *     @OA\Response(response="403", description="Not authorized"),
      *     @OA\Response(response="404", description="Departement does not exist"),
@@ -198,6 +202,7 @@ class DepartementController extends Controller
     /**
      * @OA\Get(
      *     path="/api/departements/{id}/doctors/",
+     *     tags={"Admin"},
      *     @OA\Response(response="200", description="List all doctors in a specifc departement"),
      *     @OA\Response(response="403", description="Not authorized"),
      *     @OA\Response(response="404", description="Departement does not exist"),
@@ -225,6 +230,7 @@ class DepartementController extends Controller
     /**
      * @OA\Post(
      *     path="/api/departements/{id}/nurses/",
+     *     tags={"Admin"},
      *     @OA\Response(response="200", description="Create a nurse in a specifc departement"),
      *     @OA\Response(response="403", description="Not authorized"),
      *     @OA\Response(response="404", description="Departement does not exist"),
@@ -240,8 +246,22 @@ class DepartementController extends Controller
         $this->authorize("create" , Nurse::class);
         $validated = $request->validated();
 
+        $doctor = Doctor::where("user_id" , $validated["doctor_id"])->first();
+        if ( $doctor == null ) {
+            return response()->json([
+                "details" => "doctor does not exist"
+            ],404);
+        }
+
         $user = User::create(array_merge($this->getUserData($validated) , ["role_id" => Role::NURSE]));
-        Nurse::create(array_merge($this->getNuresData($validated) , ["departement_id" => $id , "user_id" => $user->id]));
+        Nurse::create(array_merge(
+            $this->getNuresData($validated), 
+            [
+                "specialization" => $validated["specialization"],
+                "departement_id" => $id , 
+                "doctor_id" => $validated["doctor_id"] , 
+                "user_id" => $user->id
+            ]));
         return response()->json([
             "status" => "created",
             "data" => $validated
@@ -251,6 +271,7 @@ class DepartementController extends Controller
     /**
      * @OA\Get(
      *     path="/api/departements/{id}/nurses/",
+     *     tags={"Admin"},
      *     @OA\Response(response="200", description="List all nurses in a specifc departement"),
      *     @OA\Response(response="403", description="Not authorized"),
      *     @OA\Response(response="404", description="Departement does not exist"),

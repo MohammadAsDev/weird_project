@@ -6,6 +6,7 @@ use App\Enums\Role;
 use App\Models\Doctor;
 use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use PhpParser\Comment\Doc;
 
 class DoctorPolicy
 {
@@ -39,6 +40,18 @@ class DoctorPolicy
     {
         $is_owner = $user->id == $doctor->user_id;
         return $is_owner || $this->isAdminOrStaff($user);
+    }
+
+    /**
+     * Determine whether the user can view Doctor's nurses.
+     *
+     * @param  \App\Models\User  $user
+     * @param  \App\Models\Doctor  $doctor
+     * @return \Illuminate\Auth\Access\Response|bool
+     */
+    public function viewNurses(User $user, Doctor $doctor) {
+        $is_doctor = $user->id == $doctor->user_id;
+        return $is_doctor || $this->isAdminOrStaff($user);
     }
 
     /**

@@ -37,7 +37,7 @@ class PatientPolicy
      * @return \Illuminate\Auth\Access\Response|bool
      */
     public function viewAppointements(User $user, Patient $patient) {
-        $is_owner = $user->id == $patient->id;
+        $is_owner = $user->id == $patient->user_id;
         return $this->isAdminOrStaff($user) || $is_owner;
     }
 
