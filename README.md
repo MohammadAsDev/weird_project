@@ -28,12 +28,17 @@ composer install
 php artisan key:generate
 ```
 
-6. Run migration:
+6. Generate JWT Key:
+```bash
+php artisan jwt:secret
+```
+
+7. Run migration:
 ```bash
 php artisan migrate
 ```
 
-7. Start the server:
+8. Start the server:
 ```bash
 php artisan serve
 ```
