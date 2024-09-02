@@ -14,8 +14,8 @@
     * for linux users:
         > cp .env.example .env
 
-4. Modify the `.env` file:
-&nbsp;You need to set database settings (i.e. `DB_DATABASE` , `DB_USERNAME` , `DB_PASSWORD`)
+4. Modify the `.env` file:\
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You need to set database settings (i.e. `DB_DATABASE` , `DB_USERNAME` , `DB_PASSWORD`)
 
 5. Generate key:
     > php artisan key:generate
