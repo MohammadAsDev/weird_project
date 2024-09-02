@@ -28,17 +28,32 @@ composer install
 php artisan key:generate
 ```
 
-6. Generate JWT Key:
-```bash
-php artisan jwt:secret
-```
+6. JWT settings:
+    * publish configuration:
+    ```
+     php artisan vendor:publish  --provider="Tymon\JWTAuth\Providers\LaravelServiceProvider"
+    ``` 
+    * generate JWT secrent:
+    ```bash
+    php artisan jwt:secret
+    ```
 
-7. Run migration:
+7. Swagger settings:
+    * publish configuration:
+    ```
+    php artisan vendor:publish --provider "L5Swagger\L5SwaggerServiceProvider"
+    ```
+    * generate documentation:
+    ```	
+    php artisan l5-swagger:generate
+    ```
+
+8. Run migration:
 ```bash
 php artisan migrate
 ```
 
-8. Start the server:
+9. Start the server:
 ```bash
 php artisan serve
 ```
