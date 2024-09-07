@@ -8,8 +8,6 @@ use App\Http\Requests\ClinicForm;
 use App\Http\Requests\ExternalClinicForm;
 use App\Http\Requests\InternalClinicForm;
 use App\Models\Clinic;
-use App\Models\Departement;
-use App\Models\Doctor;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
@@ -105,70 +103,97 @@ class ClinicController extends Controller
     ];
 
 
+    public static function getClinicOr404($clinicId) {
+        $clinic = Clinic::where("id" , $clinicId)->first();
+        if ( $clinic == null ) {
+            abort(404 , "clinic does not exist");
+        }
+        return $clinic;
+    }
+
+    public static function getInternalClinicOr404($clinicId) {
+        $clinic = Clinic::where("clinic_type" , ClinicType::INTERNAL->value)->where("id" , $clinicId)->first();
+        if ( $clinic == null ) {
+            abort(404 , "clinic does not exist");
+        }
+        return $clinic;
+    }
+
+    public static function getExternalClinicOr404($clinicId) {
+        $clinic = Clinic::where("clinic_type" , ClinicType::EXTERNAL)->where("id" , $clinicId)->first();
+        if ( $clinic == null ) {
+            abort(404 , "clinic does not exist");
+        }
+        return $clinic;
+    }
+
     /**
-     * @OA\Get(
-     *     path="/api/clinics",
-     *     tags={"Admin"},
-     *     @OA\Response(response="200", description="List all clinics"),
-     *     @OA\Response(response="403", description="Not authorized"),
-     * )
+     *  @OA\Get(
+     *      path="/api/clinics",
+     *      tags={"Admin"},
+     *      operationId = "listClinics",
+     *      summary = "list all clinics",
+     *      description= "List Clinics Endpoint.",
+     *      @OA\Response(response="200", description="OK"),
+     *      @OA\Response(response="403", description="Forbidden"),
+     *  )
      */
     public function index() {
         $this->authorize('viewAny' , Clinic::class);
-        $clinic_query = Clinic::all();
-        $clinic_data = [];
-        foreach ($clinic_query as $clinic) { 
-            array_push($clinic_data , Controller::formatData(
-                    $clinic , 
-                    ClinicController::PATIENT_CLINIC_INDEX_RESPONSE_FOMAT
-                )
-            );
-        }
-        return response()->json($this->paginate($clinic_data) , 200);
+        $clinics = Clinic::all();
+        return response()->json($this->paginate(
+            Controller::formatCollection(
+                $clinics,
+                ClinicController::PATIENT_CLINIC_INDEX_RESPONSE_FOMAT
+            )
+        ));
     }
 
 
     /**
-     * @OA\Get(
-     *     path="/api/clinics/internal",
-     *     tags={"Admin" , "Patient"},
-     *     @OA\Response(response="200", description="List all internal clinics"),
-     *     @OA\Response(response="403", description="Not authorized"),
-     * )
+     *  @OA\Get(
+     *      path="/api/clinics/internal",
+     *      tags={"Admin" , "Patient"},
+     *      operationId = "listInternalClinics",
+     *      summary = "list all internal clinics",
+     *      description= "List Internal Clinics Endpoint.",
+     *      @OA\Response(response="200", description="OK"),
+     *      @OA\Response(response="403", description="Forbidden"),
+     *  )
      */
     public function listInternalClinics() {
         $this->authorize('viewAny', Clinic::class);
-        $clinic_data = [];
-        $clinic_query = Clinic::where('clinic_type' , ClinicType::INTERNAL)->get();
-        foreach($clinic_query as $clinic) {
-            array_push($clinic_data , 
-                Controller::formatData(
-                    $clinic , 
+        $clinics = Clinic::where('clinic_type' , ClinicType::INTERNAL)->get();
+        
+        return response()->json(
+            $this->paginate(
+                Controller::formatCollection(
+                    $clinics,
                     ClinicController::PATIENT_INTERNAL_INDEX_RESPONSE_FORMAT
                 )
-            );
-        }
-        return response()->json($this->paginate($clinic_data) , 200);
+            )
+        );
     }
 
 
     /**
-     * @OA\Get(
-     *     path="/api/clinics/internal/{id}",
-     *     tags={"Admin" , "Patient"},
-     *     @OA\Parameter(name="id", description="clinic's id" , in="path"),
-     *     @OA\Response(response="200", description="List all internal clinics"),
-     *     @OA\Response(response="403", description="Not authorized"),
-     *     @OA\Response(response="404", description="Clinic does not exist"),
-     * )
+     *  @OA\Get(
+     *      path="/api/clinics/internal/{id}",
+     *      tags={"Admin" , "Patient"},
+     *      operationId = "readInternalClinics",
+     *      summary = "read internal clinic",
+     *      description= "Read Internal Clinic Endpoint.",
+     *      @OA\Parameter(name="id", description="clinic's id" , in="path" , required=true,
+     *          @OA\Schema(
+     *              type="integer"
+     *          )),
+     *      @OA\Response(response="200", description="OK"),
+     *      @OA\Response(response="403", description="Forbidden"),
+     *      @OA\Response(response="404", description="Object Not Found"),
+     *  )
      */
     public function readInternalClinic($id) {
-        $clinic = Clinic::where("clinic_type" , ClinicType::INTERNAL)->where("id" , $id)->first();
-        if ( $clinic == null ) {
-            return response()->json([
-                "details" => "clinic does not exist"
-            ] , 404);
-        }
+        $clinic = ClinicController::getInternalClinicOr404($id);
         $this->authorize('view' , $clinic);
         return response()->json(Controller::formatData(
                 $clinic, 
@@ -178,44 +203,46 @@ class ClinicController extends Controller
     }
 
     /**
-     * @OA\Get(
-     *     path="/api/clinics/external",
-     *     tags={"Admin" , "Patient"},
-     *     @OA\Response(response="200", description="List all external clinics"),
-     *     @OA\Response(response="403", description="Not authorized"),
-     * )
+     *  @OA\Get(
+     *      path="/api/clinics/external",
+     *      tags={"Admin" , "Patient"},
+     *      operationId = "listExternalClinics",
+     *      summary = "list external clinics",
+     *      description= "List External Clinics Endpoint.",
+     *      @OA\Response(response="200", description="OK"),
+     *      @OA\Response(response="403", description="Forbidden"),
+     *  )
      */
     public function listExternalClinics() {
         $this->authorize('viewAny', Clinic::class);
-        $clinic_data = [];
-        $clinic_query = Clinic::where('clinic_type' , ClinicType::EXTERNAL)->get();
-        foreach($clinic_query as $clinic) {
-            array_push($clinic_data , Controller::formatData(
-                    $clinic , 
-                    ClinicController::PATIENT_EXTERNAL_INDEX_RESPONSE_FORMAT
-                )
-            );
-        }
-        return response()->json($this->paginate($clinic_data) , 200);
+        $clinics = Clinic::where('clinic_type' , ClinicType::EXTERNAL)->get();
+        
+        return response()->json($this->paginate(
+            Controller::formatCollection(
+                $clinics,
+                ClinicController::PATIENT_EXTERNAL_INDEX_RESPONSE_FORMAT
+            )
+        ));
     }
 
     /**
-     * @OA\Get(
-     *     path="/api/clinics/external/{id}",
-     *     tags={"Admin" , "Patient"},
-     *     @OA\Parameter(name="id", description="clinic's id" , in="path"),
-     *     @OA\Response(response="200", description="List all external clinics"),
-     *     @OA\Response(response="403", description="Not authorized"),
-     *     @OA\Response(response="404", description="Clinic does not exist"),
-     * )
+     *   @OA\Get(
+     *      path="/api/clinics/external/{id}",
+     *      tags={"Admin" , "Patient"},
+     *      operationId = "readExternalClinics",
+     *      summary = "read external clinic",
+     *      description= "Read External Clinic Endpoint.",
+     *      @OA\Parameter(name="id", description="clinic's id" , in="path" , required=true,
+     *          @OA\Schema(
+     *              type="integer"
+     *          )),
+     *      @OA\Response(response="200", description="OK"),
+     *      @OA\Response(response="403", description="Forbidden"),
+     *      @OA\Response(response="404", description="Object Not Found"),
+     *  )
      */
     public function readExternalClinic($id) {
-        $clinic = Clinic::where("clinic_type" , ClinicType::EXTERNAL)->where("id" , $id)->first();
-        if ( $clinic == null ) {
-            return response()->json([
-                "details" => "clinic does not exist"
-            ] , 404);
-        }
+        $clinic = ClinicController::getExternalClinicOr404($id);
         $this->authorize('view' , $clinic);
         return response()->json(Controller::formatData(
                 $clinic, 
@@ -225,52 +252,66 @@ class ClinicController extends Controller
     }
 
     /**
-     * @OA\Post(
-     *     path="/api/clinics/external",
-     *     tags={"Admin"},
-     *     @OA\Response(response="200", description="Create an external clinic"),
-     *     @OA\Response(response="403", description="Not authorized"),
-     *     @OA\Response(response="422", description="Invalid data"),
-     * )
+     *  @OA\Post(
+     *      path="/api/clinics/external",
+     *      tags={"Admin"},
+     *      operationId = "createExternalClinics",
+     *      summary = "create external clinic",
+     *      description= "Create External Clinic Endpoint.",
+     *      @OA\RequestBody(
+     *          @OA\JsonContent(
+     *              type="object",
+     *              required={
+     *                  "doctor_id",
+     *                  "clinic_longitude",
+     *                  "clinic_latitude",
+     *              },
+     *              @OA\Property(property="doctor_id",type="integer"),
+     *              @OA\Property(property="clinic_longitude",type="number"),
+     *              @OA\Property(property="clinic_latitude",type="number"),
+     *          ),
+     *      ),
+     *      @OA\Response(response="200", description="OK"),
+     *      @OA\Response(response="403", description="Forbidden"),
+     *      @OA\Response(response="422", description="Unprocessable Content"),
+     *  )
      */
     public function createExternalClinic(ExternalClinicForm $request) {
         $this->authorize('create' , Clinic::class);
         $validated = $request->validated();
-        $doctor = Doctor::where("user_id" , $validated["doctor_id"])->first();
-        if ( $doctor == null ) {
-            return response()->json([
-                "details" => "doctor does not exist"
-            ] , 404);
-        }
         Clinic::create(array_merge($validated , ["clinic_type" => ClinicType::EXTERNAL]));
         return response()->json(["status" => "created" , "data" => $validated] , 200);
     }
 
 
     /**
-     * @OA\Post(
-     *     path="/api/clinics/internal",
-     *     tags={"Admin"},
-     *     @OA\Response(response="200", description="Create an internal clinic"),
-     *     @OA\Response(response="422", description="Invalid data"),
-     *     @OA\Response(response="403", description="Not authorized"),
-     * )
+     *  @OA\Post(
+     *      path="/api/clinics/internal",
+     *      tags={"Admin"},
+     *      operationId = "createInteranlClinics",
+     *      summary = "create internal clinic",
+     *      description= "Create Internal Clinic Endpoint.",
+     *      @OA\RequestBody(
+     *          @OA\JsonContent(
+     *              type="object",
+     *              required={
+     *                  "doctor_id",
+     *                  "clinic_code",
+     *                  "departement_id",
+     *              },
+     *              @OA\Property(property="doctor_id",type="integer"),
+     *              @OA\Property(property="clinic_code",type="string"),
+     *              @OA\Property(property="departement_id",type="integer"),
+     *          ),
+     *      ),
+     *      @OA\Response(response="200", description="OK"),
+     *      @OA\Response(response="422", description="Unprocessable Content"),
+     *      @OA\Response(response="403", description="Forbidden"),
+     *  )
      */
     public function createInternalClinic(InternalClinicForm $request) {
         $this->authorize('create' , Clinic::class);
         $validated = $request->validated();
-        $doctor = Doctor::where("user_id" , $validated["doctor_id"])->first();
-        if ( $doctor == null ) {
-            return response()->json([
-                "details" => "doctor does not exist"
-            ] , 404);
-        }
-        $departement = Departement::where("id" , $validated["departement_id"])->first();
-        if ( $departement == null ) {
-            return response()->json([
-                "details" => "departement does not exist"
-            ], 404);
-        }
         Clinic::create(array_merge($validated , ["clinic_type" => ClinicType::INTERNAL]));
         return response()->json([
             "status" => "created",
@@ -280,23 +321,41 @@ class ClinicController extends Controller
 
 
     /**
-     * @OA\Put(
-     *     path="/api/clinics/{id}",
-     *     tags={"Admin"},
-     *     @OA\Parameter(name="id", description="clinic's id" , in="path"),
-     *     @OA\Response(response="200", description="Update a specific clinic"),
-     *     @OA\Response(response="422", description="Invalid data"),
-     *     @OA\Response(response="403", description="Not authorized"),
-     *     @OA\Response(response="404", description="Clinic does not exist"),
-     * )
+     *  @OA\Put(
+     *      path="/api/clinics/{id}",
+     *      tags={"Admin"},
+     *      operationId = "updateClinics",
+     *      summary = "update clinic",
+     *      description= "Update Clinic Endpoint.",
+     *      @OA\RequestBody(
+     *          @OA\JsonContent(
+     *              type="object",
+     *              required={
+     *                  "doctor_id",
+     *                  "clinic_code",
+     *                  "departement_id",
+     *                  "clinic_longitude",
+     *                  "clinic_latitude",
+     *              },
+     *              @OA\Property(property="doctor_id",type="integer"),
+     *              @OA\Property(property="clinic_code",type="string"),
+     *              @OA\Property(property="departement_id",type="integer"),
+     *              @OA\Property(property="clinic_longitude",type="number"),
+     *              @OA\Property(property="clinic_latitude",type="number"),
+     *          ),
+     *      ),
+     *      @OA\Parameter(name="id", description="clinic's id" , in="path" , required=true,
+     *          @OA\Schema(
+     *              type="integer"
+     *          )),
+     *      @OA\Response(response="200", description="OK"),
+     *      @OA\Response(response="422", description="Unprocessable Content"),
+     *      @OA\Response(response="403", description="Forbidden"),
+     *      @OA\Response(response="404", description="Object Not Found"),
+     *  )
      */
     public function update(ClinicForm $request, $id) {
-        $clinic = Clinic::where("id" , $id)->first();
-        if ( $clinic == null ) {
-            return response()->json([
-                "details" => "clinic does not exist"
-            ] , 404);
-        }
+        $clinic = ClinicController::getClinicOr404($id);
         $this->authorize('update' , $clinic);
         $validated = $request->validated();
         $clinic->update($validated);
@@ -309,57 +368,29 @@ class ClinicController extends Controller
 
 
     /**
-     * @OA\Delete(
-     *     path="/api/clinics/{id}",
-     *     tags={"Admin"},
-     *     @OA\Parameter(name="id", description="clinic's id" , in="path"),
-     *     @OA\Response(response="200", description="Update a specific clinic"),
-     *     @OA\Response(response="422", description="Invalid data"),
-     *     @OA\Response(response="403", description="Not authorized"),
-     *     @OA\Response(response="404", description="Clinic does not exist"),
-     * )
+     *  @OA\Delete(
+     *      path="/api/clinics/{id}",
+     *      tags={"Admin"},
+     *      operationId = "deleteClinics",
+     *      summary = "delete clinic",
+     *      description= "Delete Clinic Endpoint.",
+     *      @OA\Parameter(name="id", description="clinic's id" , in="path" , required=true, 
+     *          @OA\Schema(
+     *              type="integer"
+     *          )),
+     *      @OA\Response(response="204", description="No Content"),
+     *      @OA\Response(response="403", description="Forbidden"),
+     *      @OA\Response(response="404", description="Object Not Found"),
+     *  )
      */
     public function delete($id) {
-        $clinic = Clinic::where("id" , $id)->first();
-        if ( $clinic == null ) {
-            return response()->json([
-                "details" => "clinic does not exist"
-            ] , 404);
-        }
+        $clinic = ClinicController::getClinicOr404($id);
         $this->authorize('delete' , $clinic);
         $clinic->delete();
         return response()->json([] , 204);
     }
 
 
-    /**
-     * @OA\Get(
-     *     path="/api/clinics/{id}/appointements",
-     *     tags={"Admin" , "Doctor"},
-     *     @OA\Parameter(name="id", description="clinic's id" , in="path"),
-     *     @OA\Response(response="200", description="List all appointements for a specific clinic"),
-     *     @OA\Response(response="403", description="Not authorized"),
-     *     @OA\Response(response="404", description="Clinic does not exist"),
-     * )
-     */
-    public function appointements($id) {
-        $clinic = Clinic::where("id" , $id)->first();
-        if ( $clinic == null ) {
-            return response()->json([
-                "details" => "clinic does not exist"
-            ], 404);
-        }
-        $this->authorize("viewAppointements" , $clinic);
-        $response_data = [];
-        $appointements = $clinic->appointements;
-        foreach ( $appointements  as $appointement ) {
-            array_push($response_data , Controller::formatData(
-                $appointement,
-                AppointementController::ALL_APPOINTMENT_INDEX_RESPONSE_FORMAT
-            ));
-        }
-        return response()->json($this->paginate($response_data));
-    }
     
     public function paginate($items, $perPage = 5, $page = null, $options = []) {
         $page = $page ?: (Paginator::resolveCurrentPage() ?: 1);

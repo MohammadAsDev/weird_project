@@ -48,14 +48,38 @@ class AppointementPolicy
     }
 
     /**
+     * Determine whether the user can view any models.
+     *
+     * @param  \App\Models\User  $user
+     * @return \Illuminate\Auth\Access\Response|bool
+     */
+    public function viewAnyAsPatient(User $user)
+    {
+        return $this->isPatient($user);
+    }
+
+    /**
+     * Determine whether the user can view any models.
+     *
+     * @param  \App\Models\User  $user
+     * @return \Illuminate\Auth\Access\Response|bool
+     */
+    public function viewAnyAsDoctor(User $user)
+    {
+        return $this->isDoctor($user);
+    }
+
+
+    /**
      * Determine whether the user can view models as patient.
      *
      * @param  \App\Models\User  $user
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function viewAsPatient(User $user)
+    public function viewAsPatient(User $user , Appointement $appointement)
     {
-        return $this->isPatient($user);
+        $patient_id = $appointement->patient_id;
+        return $this->isPatient($user) && $user->id == $patient_id;
     }
 
 
@@ -65,9 +89,10 @@ class AppointementPolicy
      * @param  \App\Models\User  $user
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function viewAsDoctor(User $user)
+    public function viewAsDoctor(User $user , Appointement $appointement)
     {
-        return $this->isDoctor($user);
+        $doctor_id = $appointement->doctor_id;
+        return $this->isDoctor($user) && $user->id == $doctor_id;
     }
 
     /**

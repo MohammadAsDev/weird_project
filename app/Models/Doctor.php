@@ -37,7 +37,15 @@ class Doctor extends Model
         return $this->hasMany(Nurse::class , "doctor_id" , "user_id");
     }
 
+    public function clinics() {
+        return $this->hasMany(Clinic::class , "doctor_id" , "user_id");
+    }
+
     public function appointements() {
         return $this->hasMany(Appointement::class , "doctor_id" , "user_id");
+    }
+
+    public function tests() {
+        return $this->hasMany(RoutineTest::class , "doctor_id" , "user_id");
     }
 }

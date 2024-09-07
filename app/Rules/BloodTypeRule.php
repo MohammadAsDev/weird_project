@@ -36,6 +36,6 @@ class BloodTypeRule implements Rule
      */
     public function message()
     {
-        return 'The validation error message.';
+        return 'blood type is not found';
     }
 }

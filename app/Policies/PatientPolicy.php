@@ -5,7 +5,6 @@ namespace App\Policies;
 use App\Enums\Role;
 use App\Models\Patient;
 use App\Models\User;
-use Error;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class PatientPolicy
@@ -30,13 +29,14 @@ class PatientPolicy
     }
 
     /**
-     * Determine whether the user can update the model.
+     * Determine whether the user can view the patient's doctors.
      *
      * @param  \App\Models\User  $user
      * @param  \App\Models\Patient  $patient
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function viewAppointements(User $user, Patient $patient) {
+    public function viewDoctors(User $user, Patient $patient)
+    {
         $is_owner = $user->id == $patient->user_id;
         return $this->isAdminOrStaff($user) || $is_owner;
     }
@@ -51,8 +51,6 @@ class PatientPolicy
     public function view(User $user, Patient $patient)
     {
         $is_owner = $user->id == $patient->user_id;
-        error_log($user->id);
-        error_log($patient->user_id);
         return $this->isAdminOrStaff($user) || $is_owner;
     }
 

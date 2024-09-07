@@ -2,11 +2,9 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Contracts\Validation\Validator;
-use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Http\Exceptions\HttpResponseException;
+use App\Rules\ExistRule;
 
-class InternalClinicForm extends FormRequest
+class InternalClinicForm extends ClinicForm
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -18,11 +16,6 @@ class InternalClinicForm extends FormRequest
         return true;
     }
 
-    protected function failedValidation(Validator $validator)
-    {
-        throw new HttpResponseException(response()->json(['errors' => $validator->errors()], 422));
-    }
-
     /**
      * Get the validation rules that apply to the request.
      *
@@ -32,11 +25,12 @@ class InternalClinicForm extends FormRequest
     public function rules()
     {
         if ( $this->isMethod('POST') ) {
-            return [
-                'doctor_id' => 'required|integer',
-                'departement_id' => 'required|integer',
+            return array_merge(parent::rules(), [
+                'doctor_id' => ['required','integer' , new ExistRule()],
                 'clinic_code' => 'required|string|unique:clinics',
-            ];
-        }        
+            ]);
+        } else if ( $this->isMethod('PUT') ) {
+            return parent::rules();
+        }
     }
 }

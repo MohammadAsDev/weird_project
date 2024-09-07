@@ -29,6 +29,8 @@ class CreateClinicsTable extends Migration
             
             $table->timestamps();
 
+            $table->index("clinic_type");   // make query much faster
+
             $table->index('doctor_id');
             $table->foreign('doctor_id')->references('user_id')->on('doctors');
             
@@ -45,6 +47,8 @@ class CreateClinicsTable extends Migration
     public function down()
     {
         Schema::drop('clinics' , function(Blueprint $table) {
+            $table->dropIndex('clinic_type');
+
             $table->dropForeign('doctor_id');
             $table->dropIndex('departement_id');
             $table->dropForeign('departement_id');

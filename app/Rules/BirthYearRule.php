@@ -2,7 +2,10 @@
 
 namespace App\Rules;
 
+use App\Http\Controllers\Controller;
+use Carbon\Carbon;
 use Illuminate\Contracts\Validation\Rule;
+use Illuminate\Support\Facades\Date;
 
 class BirthYearRule implements Rule
 {
@@ -23,8 +26,16 @@ class BirthYearRule implements Rule
      * @param  mixed  $value
      * @return bool
      */
+
+    const MIN_AGE = 10;     // for testing purposes
+
     public function passes($attribute, $value)    {
-        return $value >= 1990 && $value <= date('Y');
+        $birth_date = Carbon::createFromFormat("Y-m-d" ,$value);
+        $age = Carbon::now()->diffInYears($birth_date);
+        if ($age < BirthYearRule::MIN_AGE) {
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -33,6 +44,6 @@ class BirthYearRule implements Rule
      * @return string
      */
     public function message()    {
-        return 'The :attribute must be between 1990 to '.date('Y').'.';
+        return 'your age is lower than ' . (string)BirthYearRule::MIN_AGE;
     }
 }

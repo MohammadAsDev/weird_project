@@ -30,19 +30,6 @@ class DoctorPolicy
     }
 
     /**
-     * Determine whether the user can view Doctor's appointements.
-     *
-     * @param  \App\Models\User  $user
-     * @param  \App\Models\Doctor  $doctor
-     * @return \Illuminate\Auth\Access\Response|bool
-     */
-    public function viewAppointements(User $user , Doctor $doctor)
-    {
-        $is_owner = $user->id == $doctor->user_id;
-        return $is_owner || $this->isAdminOrStaff($user);
-    }
-
-    /**
      * Determine whether the user can view Doctor's nurses.
      *
      * @param  \App\Models\User  $user
@@ -50,6 +37,18 @@ class DoctorPolicy
      * @return \Illuminate\Auth\Access\Response|bool
      */
     public function viewNurses(User $user, Doctor $doctor) {
+        $is_doctor = $user->id == $doctor->user_id;
+        return $is_doctor || $this->isAdminOrStaff($user);
+    }
+
+    /**
+     * Determine whether the user can view Doctor's clinics.
+     *
+     * @param  \App\Models\User  $user
+     * @param  \App\Models\Doctor  $doctor
+     * @return \Illuminate\Auth\Access\Response|bool
+     */
+    public function viewClinics(User $user, Doctor $doctor) {
         $is_doctor = $user->id == $doctor->user_id;
         return $is_doctor || $this->isAdminOrStaff($user);
     }

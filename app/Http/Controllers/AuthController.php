@@ -3,10 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\LoginForm;
-use App\Models\User;
-use Dotenv\Validator;
-use Illuminate\Auth\Events\Validated;
-use Illuminate\Support\Facades\Validator as FacadesValidator;
 
 class AuthController extends Controller {
 
@@ -15,10 +11,23 @@ class AuthController extends Controller {
         $this->middleware('auth:api', ['except' => ['login' , 'register']]);
     }
 
+
     /**
-     * Get a JWT via given credentials.
-     *
-     * @return \Illuminate\Http\JsonResponse
+     *  @OA\Post(
+     *       path="/api/auth/login",
+     *       tags={"Doctor" , "Patient" , "Nurse" , "Admin"},
+     *       operationId = "login",
+     *       summary = "log into the system",
+     *       description= "Login Endpoint.",
+     *      @OA\RequestBody(
+     *          @OA\JsonContent(
+     *              type="object",
+     *              @OA\Property(property="email",type="string"),
+     *              @OA\Property(property="password",type="string"),
+     *      )),
+     *       @OA\Response(response="200", description="OK"),
+     *       @OA\Response(response="401", description="Not Authorized"),
+     *  )
      */
     public function login(LoginForm $request) {
         $validated = $request->validated();
@@ -29,20 +38,16 @@ class AuthController extends Controller {
         return $this->respondWithToken($token); # If all credentials are correct - we are going to generate a new access token and send it back on response
    }
 
-    /**
-     * Get the authenticated User.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function me() {
-        # Here we just get information about current user
-        return response()->json(auth()->user());
-    }
 
     /**
-     * Log the user out (Invalidate the token).
-     *
-     * @return \Illuminate\Http\JsonResponse
+     *  @OA\Post(
+     *       path="/api/auth/logout",
+     *       tags={"Doctor" , "Patient" , "Nurse" , "Admin"},
+     *       operationId = "logout",
+     *       summary = "log out from system",
+     *       description= "Logout Endpoint.",
+     *       @OA\Response(response="200", description="OK"),
+     *  )
      */
     public function logout() {
         auth()->logout(); # This is just logout function that will destroy access token of current user
@@ -54,9 +59,14 @@ class AuthController extends Controller {
     }
 
     /**
-     * Refresh a token.
-     *
-     * @return \Illuminate\Http\JsonResponse
+     *  @OA\Post(
+     *       path="/api/auth/refresh",
+     *       tags={"Doctor" , "Patient" , "Nurse" , "Admin"},
+     *       operationId = "refresh",
+     *       summary = "refresh user's token",
+     *       description= "Refresh Endpoint.",
+     *       @OA\Response(response="200", description="OK"),
+     *  )
      */
     public function refresh() {
         # When access token will be expired, we are going to generate a new one wit this function 

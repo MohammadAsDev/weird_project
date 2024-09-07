@@ -2,15 +2,17 @@
 
 namespace App\Http\Controllers\Patients;
 
-use App\Enums\BloodType;
 use App\Http\Controllers\Controller;
 use App\Enums\Role;
 use App\Http\Requests\PatientForm;
 use App\Http\Requests\PreCheckForm;
+use App\Http\Requests\UserForm;
+use App\Models\Doctor;
 use App\Models\Patient;
 use App\Models\User;
-use Error;
+use Exception;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Arr;
@@ -64,19 +66,64 @@ class PatientController extends Controller
         "structured" => true
     ];
 
+    public static function getPatientOr404($patientId) {
+        $patient = Patient::where('user_id' , $patientId)->first();
+        if ( $patient == null ) {
+            abort(404 , "patient does not exist");       
+        }
+        return $patient;
+    }
+
+    private function getDoctors($patientId) {
+        return Doctor::join(
+            "appointements as app" , 
+            "app.doctor_id" , 
+            "=" , 
+            "doctors.user_id"
+        )->where("app.patient_id" , $patientId)->get()->unique('user_id');
+    }
+
     /**
-     * @OA\Post(
-     *     path="/api/patients",
-     *     tags={"Anonymous"},
-     *     @OA\Response(response="200", description="Create new patient"),
-     *     @OA\Response(response="403", description="Not authorized"),
-     *     @OA\Response(response="422", description="Invalid data"),
-     * )
+     *  @OA\Post(
+     *      path="/api/patients",
+     *      tags={"Anonymous"},
+     *      operationId = "createPatient",
+     *      summary = "create a new patient",
+     *      description= "Create Patient Endpoint.",
+     *      @OA\RequestBody(
+     *          @OA\JsonContent(
+     *              type="object",
+     *              required={
+     *                  "first_name",
+     *                  "last_name",
+     *                  "email",
+     *                  "password",
+     *                  "phone_number",
+     *                  "address",
+     *                  "gender",
+     *                  "birth_date",
+     *                  "ssn",
+     *              },
+     *              @OA\Property(property="first_name",type="string"),
+     *              @OA\Property(property="last_name",type="string"),
+     *              @OA\Property(property="email",type="string"),
+     *              @OA\Property(property="password",type="string"),
+     *              @OA\Property(property="phone_number",type="string"),
+     *              @OA\Property(property="address",type="string"),
+     *              @OA\Property(property="gender",type="integer"),
+     *              @OA\Property(property="birth_date",type="date"),
+     *              @OA\Property(property="ssn",type="string"),
+     *          ),
+     *      ),
+     *      @OA\Response(response="200", description="OK"),
+     *      @OA\Response(response="403", description="Forbidden"),
+     *      @OA\Response(response="422", description="Unprocessable Content"),
+     *  )
      */
     protected function create(PatientForm $request) {
         
         $validated = $request->validated();
-        $user_data = array_merge($validated , ["role_id" => Role::PATIENT->value]);
+        $user_data = array_merge($validated , ["role_id" => Role::ANONYMOUS->value]);
 
         User::create($user_data);
 
@@ -89,22 +136,23 @@ class PatientController extends Controller
 
     
     /**
-     * @OA\Get(
-     *     path="/api/patients/{id}",
-     *     tags={"Admin"},
-     *     @OA\Parameter(name="id", description="patient's id" , in="path"),
-     *     @OA\Response(response="200", description="Read a specifc patient"),
-     *     @OA\Response(response="403", description="Not authorized"),
-     *     @OA\Response(response="404", description="Patient does not exist"),
-     * )
+     *  @OA\Get(
+     *      path="/api/patients/{id}",
+     *      tags={"Admin"},
+     *      operationId = "readPatient",
+     *      summary = "read a patient",
+     *      description= "Read Patient Endpoint.",
+     *      @OA\Parameter(name="id", description="patient's id" , in="path" , required=true,
+     *          @OA\Schema(
+     *              type="integer"
+     *          )),
+     *      @OA\Response(response="200", description="OK"),
+     *      @OA\Response(response="403", description="Forbidden"),
+     *      @OA\Response(response="404", description="Object Not Found"),
+     *  )
      */
     protected function read($id) {
-        $patient = Patient::where('user_id' , $id)->first();
-        if ( $patient == null ) {
-            return response()->json([
-                "details" => "patient account does not exist"
-            ],400);       
-        }
+        $patient = PatientController::getPatientOr404($id);
         $this->authorize('view' , $patient);
         return response()->json(
             Controller::formatData(
@@ -116,178 +164,349 @@ class PatientController extends Controller
 
 
     /**
-     * @OA\Put(
-     *     path="/api/patients/{id}",
-     *     tags={"Admin"},
-     *     @OA\Parameter(name="id", description="patient's id" , in="path"),
-     *     @OA\Response(response="200", description="Update a specifc patient"),
-     *     @OA\Response(response="403", description="Not authorized"),
-     *     @OA\Response(response="404", description="Patient does not exist"),
-     *     @OA\Response(response="420", description="Invalid data"),
-     * )
+     *  @OA\Put(
+     *      path="/api/patients/{id}",
+     *      tags={"Admin"},
+     *      operationId = "updatePatient",
+     *      summary = "update a patient",
+     *      description= "Update Patient Endpoint.",
+     *      @OA\RequestBody(
+     *          @OA\JsonContent(
+     *              type="object",
+     *              @OA\Property(property="first_name",type="string"),
+     *              @OA\Property(property="last_name",type="string"),
+     *              @OA\Property(property="email",type="string"),
+     *              @OA\Property(property="password",type="string"),
+     *              @OA\Property(property="phone_number",type="string"),
+     *              @OA\Property(property="address",type="string"),
+     *              @OA\Property(property="gender",type="integer" , enum=App\Enums\Gender::class),
+     *              @OA\Property(property="birth_date",type="date"),
+     *              @OA\Property(property="ssn",type="string"),
+     *          ),
+     *      ),
+     *      @OA\Parameter(name="id", description="patient's id" , in="path", required=true,
+     *          @OA\Schema(
+     *              type="integer"
+     *          )),
+     *      @OA\Response(response="200", description="OK"),
+     *      @OA\Response(response="403", description="Forbidden"),
+     *      @OA\Response(response="404", description="Object Not Found"),
+     *      @OA\Response(response="420", description="Unprocessable Content"),
+     *  )
      */
     protected function update(PatientForm $request , $id) {
-        $patient = Patient::where('user_id' , $id)->first();
-        if ( $patient == null ){
-            return response()->json([
-                "details" => "patient account does not exist"
-            ],400); 
-        }
+        $patient = PatientController::getPatientOr404($id);
         $this->authorize('update' , $patient);
 
         $validated = $request->validated();
         $user_data = Arr::except($validated , ['blood_type' , 'aspirin_allergy']);
 
-        $patient->user->update($user_data);
-        $patient->update([
-            "blood_type" => $validated["blood_type"] ?? $patient->blood_type,
-            "aspirin_allergy" => $validated["aspirin_allergy"] ?? $patient->aspirin_allergy
-        ]);
+        $status_code = 0;
+        $response_data = [];
+    
+        DB::beginTransaction();
+        try {
+            $patient->user->update($user_data);
+            $patient->update([
+                "blood_type" => $validated["blood_type"] ?? $patient->blood_type,
+                "aspirin_allergy" => $validated["aspirin_allergy"] ?? $patient->aspirin_allergy
+            ]);
+            DB::commit();
 
-
-        return response()->json(
-            Controller::formatData(
+            $status_code = 200;
+            $response_data = Controller::formatData(
                 $patient , 
                 PatientController::ADMIN_READ_RESPONSE_FORMAT
-            ), 200
+            );
+        } catch (Exception $exp) {
+            DB::rollBack();
+            
+            $status_code = 500;
+        }
+
+
+        return response()->json($response_data , $status_code);
+    }
+
+
+    /**
+     *  @OA\Delete(
+     *      path="/api/patients/{id}",
+     *      tags={"Admin"},
+     *      operationId = "deletePatient",
+     *      summary = "delete a patient",
+     *      description= "Delete Patient Endpoint.",
+     *      @OA\Parameter(name="id", description="patient's id" , in="path" , required=true,
+     *          @OA\Schema(
+     *              type="integer"
+     *          )),
+     *      @OA\Response(response="204", description="No Content"),
+     *      @OA\Response(response="403", description="Forbidden"),
+     *      @OA\Response(response="404", description="Object Not Found"),
+     *  )
+     */
+    protected function delete($id) {
+        $patient = PatientController::getPatientOr404($id);
+        $this->authorize('delete' , $patient);
+
+        $user = $patient->user;
+        
+        $status_code = 0;
+        $response_data = [];
+
+        DB::beginTransaction();
+        try {
+            $patient->delete();
+            $user->delete();
+            DB::commit();
+
+            $status_code = 204;
+        } catch (Exception $exp) {
+            DB::rollBack();
+            $status_code = 500;
+        }
+        return response()->json($response_data, $status_code);
+    }
+
+    /**
+     *  @OA\Get(
+     *      path="/api/patients/{id}/doctors",
+     *      tags={"Admin"},
+     *      operationId = "listPatientDoctors",
+     *      summary = "list doctors for a patient",
+     *      @OA\Parameter(name="id", description="patient's id" , in="path" , required=true, 
+     *          @OA\Schema(
+     *              type="integer"
+     *          )),
+     *      description= "List Patient's Doctors Endpoint.",
+     *      @OA\Response(response="200", description="OK"),
+     *      @OA\Response(response="403", description="Forbidden"),
+     *      @OA\Response(response="404", description="Object Not Found"),
+     *  )
+     */
+    protected function doctors($id){
+        $patient = PatientController::getPatientOr404($id);
+        $this->authorize("viewDoctors" , $patient);
+
+        $doctors = $this->getDoctors($id);
+        return response()->json(
+            $this->paginate(
+                Controller::formatCollection(
+                    $doctors,
+                    PatientController::ADMIN_READ_RESPONSE_FORMAT
+                )
+            )
         );
     }
 
 
     /**
-     * @OA\Delete(
-     *     path="/api/patients/{id}",
-     *     tags={"Admin"},
-     *     @OA\Parameter(name="id", description="patient's id" , in="path"),
-     *     @OA\Response(response="204", description="Delete a specifc patient"),
-     *     @OA\Response(response="403", description="Not authorized"),
-     *     @OA\Response(response="404", description="Patient does not exist"),
-     * )
-     */
-    protected function delete($id) {
-        $patient = Patient::where('user_id' , $id)->first();
-        if ( $patient == null) {
-            return response()->json([
-                "details" => "patient does not exist"
-            ],404);
-        }
-        $this->authorize('delete' , $patient);
-
-        $user = $patient->user;
-        $patient->delete();
-        $user->delete();
-        return response()->json([], 204);
-    }
-
-
-    /**
-     * @OA\Get(
-     *     path="/api/patients",
-     *     tags={"Admin"},
-     *     @OA\Response(response="200", description="List all patients"),
-     *     @OA\Response(response="403", description="Not authorized"),
-     * )
+     *  @OA\Get(
+     *      path="/api/patients",
+     *      tags={"Admin"},
+     *      operationId = "listPatients",
+     *      summary = "list all patients",
+     *      description= "List Patients Endpoint.",
+     *      @OA\Response(response="200", description="OK"),
+     *      @OA\Response(response="403", description="Forbidden"),
+     *  )
      */
     protected function index(){
         $this->authorize("viewAny" , Patient::class);
 
         $patients = Patient::all();
-        $patients_response = [];
-
-        foreach($patients as $patient) {
-            $patient_data = Controller::formatData($patient , PatientController::ADMIN_READ_RESPONSE_FORMAT);
-            array_push($patients_response, $patient_data);
-        }
-        
         return response()->json(
-            $this->paginate($patients_response)
+            $this->paginate(
+                Controller::formatCollection(
+                    $patients,
+                    PatientController::ADMIN_READ_RESPONSE_FORMAT
+                )
+            )
         );
     }
 
 
-    /**
-     * @OA\Get(
-     *     path="/api/patients/{id}/appointements",
-     *     tags={"Patient" , "Admin"},
-     *     @OA\Parameter(name="id", description="patient's id" , in="path"),
-     *     @OA\Response(response="200", description="List all appointements for a patient"),
-     *     @OA\Response(response="403", description="Not authorized"),
-     *     @OA\Response(response="422", description="Invalid data"),
-     * )
-     */
-    public function appointements($id) {
-        $patient = Patient::where("user_id" , $id)->first();
-        if ( $patient == null ) {
-            return response()->json([
-                "details" => "patient does not exist"
-            ] , 404);
-        }
-        $this->authorize("viewAppointements" , $patient);
-        $appointements = $patient->appointements;
-        return response()->json($this->paginate($appointements));
-    }
-
 
     /**
-     * @OA\Get(
-     *     path="/api/patients/prechecks",
-     *     tags={"Admin"},
-     *     @OA\Response(response="200", description="List all patients without precheck"),
-     *     @OA\Response(response="403", description="Not authorized"),
-     * )
+     *  @OA\Get(
+     *      path="/api/patients/prechecks",
+     *      tags={"Admin"},
+     *      operationId = "listPrechecks",
+     *      summary = "list all uncompleted prechecks",
+     *      description= "List Prechecks Endpoint.",
+     *      @OA\Response(response="200", description="OK"),
+     *      @OA\Response(response="403", description="Forbidden"),
+     *  )
      */
     protected function withNoPrecheck() {
         $this->authorize("viewAny" , Patient::class);
 
         $unregistered_patients = 
-        User::where("users.role_id" , "=" , Role::PATIENT->value)->
-        whereNotIn("id" , function($query) {
-            $query->select("user_id")->from("patients")->get();
-        })->get();
+            User::where("users.role_id" , "=" , Role::ANONYMOUS->value)->get();
 
-
-        $patients_data = [];
-        foreach ($unregistered_patients as $patient) {
-            array_push(
-                $patients_data , 
-                Controller::formatData(
-                    $patient , 
-                    PatientController::ADMIN_PRECHECK_FORMAT
-                )
-            );
-        }
-
-        return response()->json(
-            $this->paginate($patients_data)
-        );
+        return response()->json($this->paginate(
+            Controller::formatCollection(
+                $unregistered_patients,
+                PatientController::ADMIN_PRECHECK_FORMAT
+            )
+        ));
     }
-
-
-
+    
     /**
-     * @OA\Post(
-     *     path="/api/patients/prechecks",
-     *     tags={"Admin"},
-     *     @OA\Response(response="200", description="Create a precheck for a patient"),
-     *     @OA\Response(response="403", description="Not authorized"),
-     *     @OA\Response(response="422", description="Invalid data"),
-     * )
+     *  @OA\Post(
+     *      path="/api/patients/prechecks",
+     *      tags={"Admin"},
+     *      operationId = "savePrecheck",
+     *      summary = "save a patient's precheck",
+     *      description= "Save Patient's Precheck Endpoint.",
+     *      @OA\RequestBody(
+     *          @OA\JsonContent(
+     *              type="object",
+     *              required={"ssn" , "blood_type" , "aspirin_allergy"},
+     *              @OA\Property(property="ssn",type="string"),
+     *              @OA\Property(property="blood_type",type="integer", enum=App\Enums\BloodType::class),
+     *              @OA\Property(property="aspirin_allergy",type="boolean"),
+     *          ),
+     *      ),
+     *      @OA\Response(response="200", description="OK"),
+     *      @OA\Response(response="403", description="Forbidden"),
+     *      @OA\Response(response="422", description="Unprocessable Content"),
+     *  )
      */
     public function set_precheck(PreCheckForm $request) {
         $this->authorize("create" , Patient::class);
         $validated = $request->validated();
         $patient_user = User::where("ssn" , $validated["ssn"])->first();
         $precheck_data = Arr::except($validated , ["ssn"]);
-        Patient::create(array_merge(
-            $precheck_data,
-            ["user_id" => $patient_user->id]
-        ));
+
+        DB::beginTransaction();
+        try {
+            $patient_user->update([
+                "role_id" => Role::PATIENT->value
+            ]);
+            Patient::create(array_merge(
+                $precheck_data,
+                ["user_id" => $patient_user->id]
+            ));
+            DB::commit();
+        } catch ( Exception $exp ) {
+            DB::rollBack();
+        }
+
         return response()->json([
             "user_data" => $patient_user,
             "details" => "user has been completly registered in the system",
             "precheck_data" => $precheck_data
         ], 200);
     }
+
+
+    /**
+     *  @OA\Get(
+     *      path="/api/patients/me",
+     *      tags={"Patient"},
+     *      operationId = "currentPatient",
+     *      summary = "read current patient's info",
+     *      description= "Current Patient Endpoint.",
+     *      @OA\Response(response="200", description="OK"),
+     *      @OA\Response(response="403", description="Forbidden"),
+     *  )
+     */
+    protected function me(Request $request) {
+        $current_user = $request->user();
+        $current_patient = 
+            Patient::where(
+                "user_id",
+                $current_user->id
+            )->first();
+        if ( $current_patient == null ) {
+            return response()->json([
+                "details" => "current user is not a patient"
+            ],403);
+        }
+
+        return response()->json(
+            Controller::formatData(
+                $current_patient,
+                PatientController::ADMIN_READ_RESPONSE_FORMAT
+            )
+        );
+    }
+
+
+    /**
+     *  @OA\Put(
+     *       path="/api/patients/me",
+     *       tags={"Patient"},
+     *       operationId = "updateCurrentPatient",
+     *       summary = "update personal info for current patient",
+     *          @OA\RequestBody(
+     *              @OA\JsonContent(
+     *                  type="object",
+     *                  @OA\Property(property="first_name",type="string"),
+     *                  @OA\Property(property="last_name",type="string"),
+     *                  @OA\Property(property="email",type="string"),
+     *                  @OA\Property(property="password",type="string"),
+     *                  @OA\Property(property="phone_number",type="string"),
+     *                  @OA\Property(property="address",type="string"),
+     *                  @OA\Property(property="gender",type="integer" ,  enum=App\Enums\Gender::class),
+     *                  @OA\Property(property="birth_date",type="date"),
+     *              ),
+     *          ),
+     *       description= "Update Patient's Personal Info Endpoint.",
+     *       @OA\Response(response="200", description="OK"),
+     *       @OA\Response(response="403", description="Forbidden"),
+     *       @OA\Response(response="422", description="Unprocessable Content")
+     *  )
+     */
+    public function updateMe(UserForm $request) {
+        $current_user = $request->user();
+        $current_patient = Patient::where(
+            "user_id" , $current_user->id
+        )->first();
+        if ( $current_patient == null ) {
+            return response()->json([
+                "details" => "the current user is not a patient"
+            ] , 403);
+        }
+        $validated = $request->validated();
+        $current_user->update($validated);
+        return response()->json(
+            ["status" => "updated" , "data" => $validated]
+        );
+    }    
+
+
+    /**
+     *  @OA\Get(
+     *      path="/api/patients/me/doctors",
+     *      tags={"Patient"},
+     *      operationId = "currentPatientDoctors",
+     *      summary = "list current patient's doctors",
+     *      description= "Current Patient's Doctors Endpoint.",
+     *      @OA\Response(response="200", description="OK"),
+     *      @OA\Response(response="403", description="Forbidden"),
+     *  )
+     */
+    protected function myDoctors(Request $request){
+        $user_id = $request->user()->id;
+        $patient = Patient::where("user_id" , $user_id)->first();
+        if ( $patient == null ) {
+            return response()->json([
+                "details" => "current user is not a patient"
+            ] , 403);
+        }
+        $doctors = $this->getDoctors($user_id);
+        return response()->json(
+            $this->paginate(
+                Controller::formatCollection(
+                    $doctors,
+                    PatientController::ADMIN_READ_RESPONSE_FORMAT
+                )
+            )
+        );
+    }
+
 
     public function paginate($items, $perPage = 5, $page = null, $options = [])
     {

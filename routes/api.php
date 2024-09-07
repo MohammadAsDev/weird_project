@@ -9,6 +9,7 @@ use App\Http\Controllers\DepartementController;
 use App\Http\Controllers\Doctors\DoctorController;
 use App\Http\Controllers\Nurses\NurseController;
 use App\Http\Controllers\Patients\PatientController;
+use App\Http\Controllers\RoutineTestController;
 
 /*
 |--------------------------------------------------------------------------
@@ -32,7 +33,6 @@ Route::group([
     Route::post('login', [AuthController::class, 'login']);
     Route::post('logout', [AuthController::class, 'logout']);
     Route::post('refresh', [AuthController::class, 'refresh']);
-    Route::post('confirm', [AuthController::class, 'confirm']);
 });
 
 Route::group([  // doctors end-points
@@ -47,12 +47,18 @@ Route::group([  // doctors end-points
     Route::put('/{id}', [DoctorController::class, 'update'])->where("id" , PARAM_EXPRESSIONS["id"]);
     Route::delete('/{id}', [DoctorController::class, 'delete'])->where("id" , PARAM_EXPRESSIONS["id"]);
 
+
     // Nurses working with a specific doctor
-    Route::get('/{id}/nurses', [DoctorController::class, 'listNurses'])->where("id" , PARAM_EXPRESSIONS["id"]);
+    Route::get('/{id}/nurses', [DoctorController::class, 'nurses'])->where("id" , PARAM_EXPRESSIONS["id"]);
+    Route::get('/{id}/clinics' , [DoctorController::class , "clinics"])->where("id" , PARAM_EXPRESSIONS["id"]);
 
-    // Appointements for a specific doctor
-    Route::get('/{id}/appointements' , [DoctorController::class , 'appointements'])->where("id" , PARAM_EXPRESSIONS["id"]);
 
+    // Current Doctor end-points
+    Route::get("/me" , [DoctorController::class , "me"]);
+    Route::put("/me" , [DoctorController::class , "updateMe"]);
+    Route::get("/me/nurses" , [DoctorController::class , "myNurses"]);
+    Route::get("/me/clinics" , [DoctorController::class , "myClinics"]);
+        
 });
 
 
@@ -64,14 +70,20 @@ Route::group([      // nurses end-points
     // Nurses can be created only via the departements
     // Unlike doctors, nurses can't exist without departement.
 
+    // Route::post('/', [NurseController::class , 'create']);
+
     // Nurses CRUD functionality
     Route::get('/', [NurseController::class , 'index']);
-    // Route::post('/', [NurseController::class , 'create']);
     Route::get('/{id}', [NurseController::class, 'read'])->where("id" , PARAM_EXPRESSIONS["id"]);
     Route::put('/{id}', [NurseController::class, 'update'])->where("id" , PARAM_EXPRESSIONS["id"]);
     Route::delete('/{id}', [NurseController::class, 'delete'])->where("id" , PARAM_EXPRESSIONS["id"]);
+    
+    Route::get('/{id}/doctor', [NurseController::class, 'doctor'])->where("id" , PARAM_EXPRESSIONS["id"]);
 
 
+    Route::get('/me' , [NurseController::class , 'me']);
+    Route::put("/me" , [NurseController::class , "updateMe"]);
+    Route::get('/me/doctor' , [NurseController::class , 'myDoctor']);
 });
 
 
@@ -86,13 +98,20 @@ Route::group([      // patients end-points
     Route::get('/{id}', [PatientController::class, 'read'])->where("id" , PARAM_EXPRESSIONS["id"]);
     Route::put('/{id}', [PatientController::class, 'update'])->where("id" , PARAM_EXPRESSIONS["id"]);
     Route::delete('/{id}', [PatientController::class, 'delete'])->where("id" , PARAM_EXPRESSIONS["id"]);
+
+
+    Route::get('/{id}/doctors' , [PatientController::class , "doctors"])->where("id" , PARAM_EXPRESSIONS["id"]);
+
     
     // Prechecks
     Route::get('/prechecks' , [PatientController::class , 'withNoPrecheck']);
     Route::post('/prechecks' , [PatientController::class, 'set_precheck']);
 
-    // Appointements for a specific patient
-    Route::get('/{id}/appointements' , [PatientController::class , 'appointements'])->where("id" , PARAM_EXPRESSIONS["id"]);
+
+    //Current Patient end-points
+    Route::get("/me" ,          [PatientController::class , 'me']);
+    Route::put("/me" , [PatientController::class , "updateMe"]);
+    Route::get("/me/doctors" ,  [PatientController::class , 'myDoctors']);
 });
 
 
@@ -115,6 +134,9 @@ Route::group([      // departements end-points
     // Nurses in a specific departements
     Route::get('/{id}/nurses' , [DepartementController::class , "listNurses"])->where("id" , PARAM_EXPRESSIONS["id"]);
     Route::post('/{id}/nurses' , [DepartementController::class , "createNurse"])->where("id" , PARAM_EXPRESSIONS["id"]);
+
+    Route::get('/{id}/clinics'  , [DepartementController::class , "listClinics"])->where("id" , PARAM_EXPRESSIONS["id"]);        // list all clinics in a specific departement
+    Route::post('/{id}/clinics' , [DepartementController::class , "createClinic"])->where("id" , PARAM_EXPRESSIONS["id"]);        // add a new internal clinic
 });
 
 
@@ -123,23 +145,19 @@ Route::group([          // clinics end-points
     'middleware' => 'api',
 ], function($router) {
 
-    // Clinics CRUD functionality
+    // Clinics CRUD functionality (ADMIN)
     Route::get('/', [ClinicController::class , 'index']);
+    Route::post('/' , [ClinicController::class , 'createExternalClinic']);  // create only external clinics (not sure about it)
     Route::put('/{id}', [ClinicController::class , 'update'])->where("id" , PARAM_EXPRESSIONS["id"]);
     Route::delete('/{id}', [ClinicController::class , 'delete'])->where("id" , PARAM_EXPRESSIONS["id"]);
 
-    // Appointements for a specific clinic (only doctor or admin can see that)
-    Route::get('/{id}/appointements' , [ClinicController::class , 'appointements'])->where("id" , PARAM_EXPRESSIONS["id"]);
-
-    // Interal clinics
+    // Interal clinics (PATIENTS)
     Route::get('/internal' , [ClinicController::class , 'listInternalClinics']);        // patients should see that
     Route::get('/internal/{id}', [ClinicController::class , 'readInternalClinic'])->where("id" , PARAM_EXPRESSIONS["id"]);
-    Route::post('/internal' , [ClinicController::class , 'createInternalClinic']);
 
-    // External clinics
+    // External clinics (PATIENTS)
     Route::get('/external' , [ClinicController::class , 'listExternalClinics']);        // patients should see that
     Route::get('/external/{id}', [ClinicController::class , 'readExternalClinic'])->where("id" , PARAM_EXPRESSIONS["id"]);
-    Route::post('/external' , [ClinicController::class , 'createExternalClinic']);
     
 });
 
@@ -147,24 +165,45 @@ Route::group([          // clinics end-points
 Route::group([
     "prefix" => 'appointements',
     'middleware' => 'api',
-], function ($router) {
+], function ($router) {     // no deletetion for appointements
     
-    // Appointements
+    // Appointements (only admins)
     Route::get("/" , [AppointementController::class , 'index']);
-    Route::post("/" , [AppointementController::class , 'create']);
+    Route::get("/doctors/{id}"  , [AppointementController::class , "listDoctorAppointements"])->where("id" , PARAM_EXPRESSIONS["id"]);
+    Route::get("/patients/{id}" , [AppointementController::class , "listPatientAppointements"])->where("id" , PARAM_EXPRESSIONS["id"]);
+    Route::get("/clinics/{id}"  , [AppointementController::class , "listClinicAppointements"])->where("id" , PARAM_EXPRESSIONS["id"]);
+
+    Route::post("/" , [AppointementController::class , 'create']);  // for patients
 
     // My Appointements (for patients)
     Route::get("/me" , [AppointementController::class , "me"]);
-    Route::get("/me/{id}" , [AppointementController::class , "readAppointement"]);
+    Route::get("/me/{id}" , [AppointementController::class , "readAppointement"])->where("id" , PARAM_EXPRESSIONS["id"]);
    
-
     // My patients (for doctors)
-    Route::get("/patients" , [AppointementController::class , "patients"]);
-    Route::get("/patients/{id}" , [AppointementController::class , "readPatient"]);
-    Route::put("/patients/{id}"  , [AppointementController::class , 'submit']);      // only doctors can do that
-
+    Route::get("/me/patients" , [AppointementController::class , "patients"]);
+    Route::get("/me/patients/{id}" , [AppointementController::class , "readPatient"])->where("id" , PARAM_EXPRESSIONS["id"]);
+    
+    // only doctors can do that
+    Route::put("/me/patients/{id}"  , [AppointementController::class , 'submit'])->where("id" , PARAM_EXPRESSIONS["id"]);      
 
     // Appointements depending on clinics or doctors (period as query)
-    Route::get("/clinics/{id}" , [AppointementController::class , 'listClinicAppointements']);     //patients should see that
-    Route::get("/doctors/{id}" , [AppointementController::class , 'listDoctorAppointements']);     //patients should see that  
+    Route::get("/schedule/clinics/{id}" , [AppointementController::class , 'listClinicSchedule'])->where("id" , PARAM_EXPRESSIONS["id"]);     //patients should see that
+    Route::get("/schedule/doctors/{id}" , [AppointementController::class , 'listDoctorSchedule'])->where("id" , PARAM_EXPRESSIONS["id"]);     //patients should see that  
+});
+
+Route::group([
+    "middleware" => "api",
+    "prefix" => "tests"
+] , function($router) { // no deletion for routine tests
+    Route::get("/" , [RoutineTestController::class , "index"]);
+    Route::get("/{id}" , [RoutineTestController::class , "read"])->where("id" , PARAM_EXPRESSIONS["id"]);
+    Route::put("/{id}" , [RoutineTestController::class , "update"])->where("id" , PARAM_EXPRESSIONS["id"]);
+    
+    Route::get("/patients/{id}" , [RoutineTestController::class , "listPatientTests"])->where("id" , PARAM_EXPRESSIONS["id"]);
+    Route::get("/doctors/{id}"  , [RoutineTestController::class , "listDoctorTests"])->where("id" , PARAM_EXPRESSIONS["id"]);
+    
+    Route::get("/me" , [RoutineTestController::class , "me"]); //for patients
+    Route::get("/me/{id}" , [RoutineTestController::class , "readMyTest"])->where("id" , PARAM_EXPRESSIONS["id"]);
+    Route::get("/me/patients" , [RoutineTestController::class , "myPatients"]); //for doctors
+    Route::get("/me/patients/{id}" , [RoutineTestController::class , "readMyPatients"])->where("id" , PARAM_EXPRESSIONS["id"]); //for doctors
 });

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
@@ -59,11 +60,22 @@ class Controller extends BaseController
                 continue;
 
             }
-            if ($attr->$val) {
+            if ($attr->$val != null) {
                 $response_data[$key] = $attr->$val;
             }
         }
         
+        return $response_data;
+    }
+
+    public static function formatCollection(Collection $collection, $format) {
+        $response_data = [];
+        foreach ($collection as $item) {
+            array_push(
+                $response_data,
+                Controller::formatData($item , $format)
+            );
+        }
         return $response_data;
     }
 }
