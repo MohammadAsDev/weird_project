@@ -5,12 +5,14 @@ The first version of this system is ready, now the main functionlity is supporte
 __Note__: This version is not tested very well, it just made to satisfy customer's demands as fast as possible, so you may find some bugs.
 
 ## TODO (2.0.0):
+
 This is my list for the next version of the system:
-    1. Improve Performance
-    2. Testing...
-    3. Upgrade patients registration
-    4. Push Notifcations
-    5. Mail Service
+
+1. Improve Performance
+2. Testing...
+3. Upgrade patients registration
+4. Push Notifcations    
+5. Mail Service
 
 ## Installation Steps:
 
