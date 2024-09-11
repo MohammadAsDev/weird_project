@@ -40,8 +40,7 @@ class ClinicPolicy
      * @return \Illuminate\Auth\Access\Response|bool
      */
     public function view(User $user, Clinic $clinic) { // patients should have access to all clinics
-        $owner_id = $clinic->doctor_id;
-        return $owner_id == $user->id || $this->isAdminOrStaffOrPatient($user);
+        return $this->isAdminOrStaff($user);
     }
 
     /**

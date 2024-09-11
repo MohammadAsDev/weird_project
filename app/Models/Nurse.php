@@ -13,11 +13,11 @@ class Nurse extends Model
 
     protected $fillable = [
         'user_id',
-        'doctor_id',
         'departement_id',
         'specialization',
         'rate',
-        'short_description'
+        'short_description',
+        'assigned_at'
     ];
 
     protected $primaryKey = "user_id";
@@ -32,9 +32,6 @@ class Nurse extends Model
         return $this->belongsTo(User::class , "user_id" , "id");
     }
 
-    public function doctor() {
-        return $this->belongsTo(Doctor::class , "doctor_id" , "user_id");
-    }
 
     public function departement() {
         return $this->belongsTo(Departement::class);

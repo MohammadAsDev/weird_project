@@ -19,8 +19,8 @@ class CreateNursesTable extends Migration
 
             $table->bigInteger('user_id')->unsigned();
             $table->bigInteger('departement_id')->unsigned();
-            $table->bigInteger('doctor_id')->unsigned();
 
+            $table->date('assigned_at');
             $table->integer('specialization');
             $table->integer('rate');
             $table->string('short_description' , 500);
@@ -29,9 +29,6 @@ class CreateNursesTable extends Migration
             $table->primary('user_id');
 
             $table->foreign("user_id")->references('id')->on('users');
-   
-            $table->index('doctor_id');
-            $table->foreign('doctor_id')->references('user_id')->on('doctors');
 
             $table->index('departement_id');
             $table->foreign('departement_id')->references('id')->on('departements');
@@ -47,8 +44,6 @@ class CreateNursesTable extends Migration
     {
         Schema::table('nurses' , function(Blueprint $table) {
             $table->dropForeign('user_id');
-            $table->dropIndex('doctor_id');
-            $table->dropForeign('doctor_id');
             $table->dropIndex('departement_id');
             $table->dropForeign('departement_id');
         });

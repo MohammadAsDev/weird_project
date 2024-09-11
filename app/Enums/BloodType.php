@@ -2,6 +2,12 @@
 
 namespace App\Enums;
 
+/**
+ * @OA\Schema(
+ *  type="integer",
+ *  title="Blood Type Enum"
+ * )
+ */
 enum BloodType : int {
     case APostive   = 0;
     case ANegative  = 1;

@@ -2,72 +2,55 @@
 
 namespace App\Http\Controllers\Patients;
 
+use App\Enums\AppointementStatus;
 use App\Http\Controllers\Controller;
 use App\Enums\Role;
+use App\Enums\VerificationTokenStatus;
+use App\Http\Controllers\Doctors\DoctorController;
 use App\Http\Requests\PatientForm;
-use App\Http\Requests\PreCheckForm;
+use App\Http\Requests\TokenForm;
 use App\Http\Requests\UserForm;
 use App\Models\Doctor;
 use App\Models\Patient;
 use App\Models\User;
+use App\Models\VerifyToken;
 use Exception;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 
 class PatientController extends Controller
 {
 
-    const ADMIN_READ_RESPONSE_FORMAT = [
-        "user" => [
-            "id" => "id",
-            "first_name" => "first_name",
-            "last_name" => "last_name",
-            "email" => "email",
-            "phone_number" => "phone_number",
-            "gender" => "gender",
-            "address" => "address",
-            "birth_date" => "birth_date",
-            "profile_picture_path" => "profile_picture_path",
-        ],
-      
-        // Patient Info
-        "aspirin_allergy" => "aspirin_allergy",
-        "blood_type" => "blood_type",
-        "structured" => true
-    ];
-
-    const DOCTOR_READ_RESPONSE_FORMAT = [
-        "user" => [
-            "first_name" => "first_name",
-            "last_name" => "last_name",
-            "gender" => "gender",
-            "birth_date" => "birth_date",
-            "profile_picture_path" => "profile_picture_path",
-            "strucutred" => false,
-        ],
-        "aspirin_allergy" => "aspirin_allergy",
-        "blood_type" => "blood_type",
-        "structured" => true
-    ];
-
-    const ADMIN_PRECHECK_FORMAT = [
+    const ADMIN_READ_RESPONSE_FORMAT = [        // Doctor's View on Patient's Data
+        "id" => "id",
         "first_name" => "first_name",
         "last_name" => "last_name",
         "email" => "email",
         "phone_number" => "phone_number",
         "gender" => "gender",
-        "birth_date" => "birth_date",
         "address" => "address",
+        "birth_date" => "birth_date",
+        "profile_picture_path" => "profile_picture_path",
         "ssn" => "ssn",
         "structured" => true
     ];
 
+    const DOCTOR_READ_RESPONSE_FORMAT = [   // Doctor's View on Patient's Data
+        "id" => "id",
+        "first_name" => "first_name",
+        "last_name" => "last_name",
+        "gender" => "gender",
+        "birth_date" => "birth_date",
+        "profile_picture_path" => "profile_picture_path",
+        "structured" => true
+    ];
+
+
     public static function getPatientOr404($patientId) {
-        $patient = Patient::where('user_id' , $patientId)->first();
+        $patient = User::where("role_id" , Role::PATIENT)->where('id' , $patientId)->first();
         if ( $patient == null ) {
             abort(404 , "patient does not exist");       
         }
@@ -80,7 +63,13 @@ class PatientController extends Controller
             "app.doctor_id" , 
             "=" , 
             "doctors.user_id"
-        )->where("app.patient_id" , $patientId)->get()->unique('user_id');
+        )->where(
+            "app.patient_id" , 
+            $patientId
+        )->where(
+            "app.status",
+            AppointementStatus::ACCEPTED
+        )->get()->unique('user_id');
     }
 
     /**
@@ -123,15 +112,40 @@ class PatientController extends Controller
     protected function create(PatientForm $request) {
         
         $validated = $request->validated();
-        $user_data = array_merge($validated , ["role_id" => Role::ANONYMOUS->value]);
+        $user_data = array_merge($validated , ["role_id" => Role::PATIENT->value]);
 
-        User::create($user_data);
+        $response_data = [];
+        $status_code = 0;
 
-        return response()->json([
-            "status" => "created",
-            "details" => "now go to the hospital to complete your registration",
-            "result" => $validated
-        ], 200);
+        $token = substr(sha1($validated["email"]) , 0, 10);
+
+        DB::beginTransaction();
+        try {
+            $user = User::create($user_data);
+            VerifyToken::create([
+                "user_id" => $user->id,
+                "token" => $token,
+            ]);
+
+            DB::commit();
+
+            $status_code = 200;
+            $response_data = [
+                "status" => "created",
+                "details" => "now go to the hospital to complete your registration",
+                "result" => $validated
+            ];
+
+        } catch (Exception $exp) {
+            DB::rollBack();
+            $status_code = 500;
+            $response_data = [
+                "status" => "uncreated"
+            ];
+        }
+
+
+        return response()->json($response_data, $status_code);
     }
 
     
@@ -179,7 +193,7 @@ class PatientController extends Controller
      *              @OA\Property(property="password",type="string"),
      *              @OA\Property(property="phone_number",type="string"),
      *              @OA\Property(property="address",type="string"),
-     *              @OA\Property(property="gender",type="integer" , enum=App\Enums\Gender::class),
+     *              @OA\Property(property="gender",type="integer" , ref="#/components/schemas/Gender"),
      *              @OA\Property(property="birth_date",type="date"),
      *              @OA\Property(property="ssn",type="string"),
      *          ),
@@ -199,18 +213,13 @@ class PatientController extends Controller
         $this->authorize('update' , $patient);
 
         $validated = $request->validated();
-        $user_data = Arr::except($validated , ['blood_type' , 'aspirin_allergy']);
 
         $status_code = 0;
         $response_data = [];
     
         DB::beginTransaction();
         try {
-            $patient->user->update($user_data);
-            $patient->update([
-                "blood_type" => $validated["blood_type"] ?? $patient->blood_type,
-                "aspirin_allergy" => $validated["aspirin_allergy"] ?? $patient->aspirin_allergy
-            ]);
+            $patient->update($validated);
             DB::commit();
 
             $status_code = 200;
@@ -311,10 +320,10 @@ class PatientController extends Controller
      *      @OA\Response(response="403", description="Forbidden"),
      *  )
      */
-    protected function index(){
+    protected function index() {
         $this->authorize("viewAny" , Patient::class);
 
-        $patients = Patient::all();
+        $patients = User::where("role_id" , Role::PATIENT)->get();
         return response()->json(
             $this->paginate(
                 Controller::formatCollection(
@@ -325,101 +334,101 @@ class PatientController extends Controller
         );
     }
 
-
-
-    /**
-     *  @OA\Get(
-     *      path="/api/patients/prechecks",
-     *      tags={"Admin"},
-     *      operationId = "listPrechecks",
-     *      summary = "list all uncompleted prechecks",
-     *      description= "List Prechecks Endpoint.",
-     *      @OA\Response(response="200", description="OK"),
-     *      @OA\Response(response="403", description="Forbidden"),
-     *  )
-     */
-    protected function withNoPrecheck() {
-        $this->authorize("viewAny" , Patient::class);
-
-        $unregistered_patients = 
-            User::where("users.role_id" , "=" , Role::ANONYMOUS->value)->get();
-
-        return response()->json($this->paginate(
-            Controller::formatCollection(
-                $unregistered_patients,
-                PatientController::ADMIN_PRECHECK_FORMAT
-            )
-        ));
-    }
-    
     /**
      *  @OA\Post(
-     *      path="/api/patients/prechecks",
-     *      tags={"Admin"},
-     *      operationId = "savePrecheck",
-     *      summary = "save a patient's precheck",
-     *      description= "Save Patient's Precheck Endpoint.",
-     *      @OA\RequestBody(
-     *          @OA\JsonContent(
-     *              type="object",
-     *              required={"ssn" , "blood_type" , "aspirin_allergy"},
-     *              @OA\Property(property="ssn",type="string"),
-     *              @OA\Property(property="blood_type",type="integer", enum=App\Enums\BloodType::class),
-     *              @OA\Property(property="aspirin_allergy",type="boolean"),
+     *      path="/api/patients/confirm",
+     *      tags={"Patient"},
+     *      operationId = "confirmPatient",
+     *      summary = "confirm patient's account",
+     *      description= "Confirm Patient Endpoint.",
+     *          @OA\RequestBody(
+     *              @OA\JsonContent(
+     *                  type="object",
+     *                  required={"token"},
+     *                  @OA\Property(property="token",type="string"),
+     *              ),
      *          ),
-     *      ),
      *      @OA\Response(response="200", description="OK"),
      *      @OA\Response(response="403", description="Forbidden"),
      *      @OA\Response(response="422", description="Unprocessable Content"),
+     *      @OA\Response(response="401", description="Unauthorized"),
+     *      @OA\Response(response="400", description="Bad Request"),
      *  )
      */
-    public function set_precheck(PreCheckForm $request) {
-        $this->authorize("create" , Patient::class);
+    protected function confirm(TokenForm $request) {
+        $this->authorize("confirm" , Patient::class);
         $validated = $request->validated();
-        $patient_user = User::where("ssn" , $validated["ssn"])->first();
-        $precheck_data = Arr::except($validated , ["ssn"]);
+        
+        $current_user = $request->user();
+        if($current_user == null) {
+            return response()->json([
+                "details" => "curret user is undefined"
+            ] , 401);
+        } 
+
+        $verification_token = $current_user->verifyToken;
+        if ( $verification_token->is_verified ) {
+            return response()->json([
+                "details" => "current user is already verified"
+            ] , 400);
+        } 
+
+
+        $current_user_token = $verification_token->token;
+
+        if (strcasecmp($current_user_token , $validated["token"]) != 0) {
+            return response()->json([
+                "details" => "invalid verification token"
+            ],422);
+        }
+
+        $status_code = 0;
+        $response_data = [];
 
         DB::beginTransaction();
         try {
-            $patient_user->update([
-                "role_id" => Role::PATIENT->value
+            $current_user->markEmailAsVerified();
+            $verification_token->update([
+                "is_verified" => true
             ]);
-            Patient::create(array_merge(
-                $precheck_data,
-                ["user_id" => $patient_user->id]
-            ));
+
             DB::commit();
-        } catch ( Exception $exp ) {
+            $status_code = 200;
+            $response_data = ["status" => "verified"];
+        } catch (Exception $exp) {
             DB::rollBack();
+
+            $status_code = 500;
+            $response_data = ["status" => "failed to verify"];
         }
-
-        return response()->json([
-            "user_data" => $patient_user,
-            "details" => "user has been completly registered in the system",
-            "precheck_data" => $precheck_data
-        ], 200);
+        return response()->json($response_data , $status_code);
     }
-
 
     /**
      *  @OA\Get(
      *      path="/api/patients/me",
      *      tags={"Patient"},
      *      operationId = "currentPatient",
-     *      summary = "read current patient's info",
+     *      summary = "current patient's account",
      *      description= "Current Patient Endpoint.",
      *      @OA\Response(response="200", description="OK"),
      *      @OA\Response(response="403", description="Forbidden"),
+     *      @OA\Response(response="401", description="Unauthorized"),
      *  )
      */
     protected function me(Request $request) {
         $current_user = $request->user();
-        $current_patient = 
-            Patient::where(
-                "user_id",
-                $current_user->id
-            )->first();
-        if ( $current_patient == null ) {
+        if ( $current_user == null ) {
+            return response()->json([
+                "details" => "current user is undefined"
+            ],401);
+        }
+        if ( !$current_user->hasVerifiedEmail() ) {
+            return response()->json([
+                "details" => "your email is not verified."
+            ] , 401);
+        }
+        if ( $current_user->getRoleID() != Role::PATIENT ) {
             return response()->json([
                 "details" => "current user is not a patient"
             ],403);
@@ -427,7 +436,7 @@ class PatientController extends Controller
 
         return response()->json(
             Controller::formatData(
-                $current_patient,
+                $current_user,
                 PatientController::ADMIN_READ_RESPONSE_FORMAT
             )
         );
@@ -449,26 +458,36 @@ class PatientController extends Controller
      *                  @OA\Property(property="password",type="string"),
      *                  @OA\Property(property="phone_number",type="string"),
      *                  @OA\Property(property="address",type="string"),
-     *                  @OA\Property(property="gender",type="integer" ,  enum=App\Enums\Gender::class),
+     *                  @OA\Property(property="gender",type="integer" ,  ref="#/components/schemas/Gender"),
      *                  @OA\Property(property="birth_date",type="date"),
      *              ),
      *          ),
      *       description= "Update Patient's Personal Info Endpoint.",
      *       @OA\Response(response="200", description="OK"),
      *       @OA\Response(response="403", description="Forbidden"),
-     *       @OA\Response(response="422", description="Unprocessable Content")
+     *       @OA\Response(response="422", description="Unprocessable Content"),
+     *       @OA\Response(response="401", description="Unauthorized"),
      *  )
      */
     public function updateMe(UserForm $request) {
         $current_user = $request->user();
-        $current_patient = Patient::where(
-            "user_id" , $current_user->id
-        )->first();
-        if ( $current_patient == null ) {
+        if ( $current_user == null ) {
+            return response()->json([
+                "details" => "current user is undefined"
+            ],401);
+        }
+        if ( !$current_user->hasVerifiedEmail() ) {
+            return response()->json([
+                "details" => "your email is not verified."
+            ] , 401);
+        }
+
+        if ( $current_user->getRoleID() != Role::PATIENT ) {
             return response()->json([
                 "details" => "the current user is not a patient"
             ] , 403);
         }
+
         $validated = $request->validated();
         $current_user->update($validated);
         return response()->json(
@@ -486,22 +505,30 @@ class PatientController extends Controller
      *      description= "Current Patient's Doctors Endpoint.",
      *      @OA\Response(response="200", description="OK"),
      *      @OA\Response(response="403", description="Forbidden"),
+     *      @OA\Response(response="401", description="Unauthorized"),
      *  )
      */
     protected function myDoctors(Request $request){
-        $user_id = $request->user()->id;
-        $patient = Patient::where("user_id" , $user_id)->first();
-        if ( $patient == null ) {
+        $current_user = $request->user();
+        if ( $current_user == null ) {
             return response()->json([
-                "details" => "current user is not a patient"
-            ] , 403);
+                "details" => "current user is undefined"
+            ],401);
         }
-        $doctors = $this->getDoctors($user_id);
+
+        if ( !$current_user->hasVerifiedEmail() ) {
+            return response()->json([
+                "details" => "your email is not verified."
+            ] , 401);
+        }
+        
+        $doctors = $this->getDoctors($current_user->id);
+        
         return response()->json(
             $this->paginate(
                 Controller::formatCollection(
                     $doctors,
-                    PatientController::ADMIN_READ_RESPONSE_FORMAT
+                    DoctorController::PATIENT_READ_RESPONSE_FORMAT
                 )
             )
         );

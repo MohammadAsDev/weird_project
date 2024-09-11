@@ -2,17 +2,19 @@
 
 namespace App\Http\Controllers\Nurses;
 
+use App\Enums\Role;
 use App\Http\Controllers\Controller;
-use App\Http\Controllers\Doctors\DoctorController;
+use App\Http\Controllers\DepartementController;
 use App\Http\Requests\NurseForm;
 use App\Http\Requests\UserForm;
 use App\Models\Nurse;
+use App\Models\User;
 use Exception;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 
 class NurseController extends Controller
@@ -30,17 +32,15 @@ class NurseController extends Controller
             "birth_date" => "birth_date",
             "profile_picture_path" => "profile_picture_path",
         ],
-
-        "doctor_id" => "doctor_id",
         "departement_id" => "departement_id",
         "specialization" => "specialization",
         "short_description" => "short_description",
+        "assigned_at" => "assigned_at",
         "rate" => "rate",
         "structured" => true
     ];
 
     public const ADMIN_READ_RESPONSE_FORMAT = [
-
         "user" => [
             "id" => "id",
             "first_name" => "first_name",
@@ -52,11 +52,32 @@ class NurseController extends Controller
             "birth_date" => "birth_date",
             "profile_picture_path" => "profile_picture_path"
         ],
-        "doctor_id" => "doctor_id",
         "departement" => "departement",
         "specialization" => "specialization",
         "short_description" => "short_description",
         "rate" => "rate",
+        "assigned_at" => "assigned_at",
+        "structured" => true
+    ];
+
+
+    public const NURSE_READ_RESPONSE_FORMAT = [
+        "user" => [
+            "id" => "id",
+            "first_name" => "first_name",
+            "last_name" => "last_name",
+            "email" => "email",
+            "phone_number" => "phone_number",
+            "gender" => "gender",
+            "address" => "address",
+            "birth_date" => "birth_date",
+            "profile_picture_path" => "profile_picture_path"
+        ],
+        "departement" => DepartementController::ALL_DEPARTEMENT_RESPONSE_FORMAT,
+        "specialization" => "specialization",
+        "short_description" => "short_description",
+        "rate" => "rate",
+        "assigned_at" => "assigned_at",
         "structured" => true
     ];
 
@@ -88,7 +109,7 @@ class NurseController extends Controller
      *       path="/api/nurses/{id}",
      *       tags={"Admin"},
      *       operationId = "readNurse",
-     *       summary = "read a nurse info",
+     *       summary = "read specific nurse info",
      *       description= "Read Nurse Endpoint.",
      *       @OA\Parameter(name="id", description="nurse's id" , in="path", required=true,
      *          @OA\Schema(
@@ -108,6 +129,83 @@ class NurseController extends Controller
                 NurseController::ADMIN_READ_RESPONSE_FORMAT
             ), 200
         );
+    }
+
+   /**
+     *  @OA\Post(
+     *     path="/api/nurses/",
+     *     tags={"Admin"},
+     *      @OA\RequestBody(
+     *          @OA\JsonContent(
+     *              type="object",
+     *              required={
+     *                  "first_name",
+     *                  "last_name",
+     *                  "email",
+     *                  "password",
+     *                  "phone_number",
+     *                  "address",
+     *                  "gender",
+     *                  "birth_date",
+     *                  "specialization",
+     *                  "short_description",
+     *                  "rate",
+     *                  "assinged_at",
+     *                  "departement_id"
+     *              },
+     *              @OA\Property(property="first_name",type="string"),
+     *              @OA\Property(property="last_name",type="string"),
+     *              @OA\Property(property="email",type="string"),
+     *              @OA\Property(property="password",type="string"),
+     *              @OA\Property(property="phone_number",type="string"),
+     *              @OA\Property(property="address",type="string"),
+     *              @OA\Property(property="gender",type="integer"),
+     *              @OA\Property(property="birth_date",type="date"),
+     *              @OA\Property(property="specialization",type="integer"),
+     *              @OA\Property(property="short_description",type="string"),
+     *              @OA\Property(property="assigned_at",type="date"),
+     *              @OA\Property(property="rate",type="integer"),
+     *              @OA\Property(property="departement_id",type="integer"),
+     *          ),
+     *     ),
+     *     @OA\Response(response="200", description="OK"),
+     *     @OA\Response(response="403", description="Forbidden"),
+     *     @OA\Response(response="404", description="Object Not Found")
+     *  )
+     */
+    protected function create(NurseForm $request) {
+        $this->authorize("create" , Nurse::class);
+        $validated = $request->validated();
+        if ( key_exists("departement_id" , $validated) == null ) {
+            throw new HttpResponseException(response()->json([
+                "errors" => [
+                    "departement_id" => ["should be supported for this end-point"]
+                ]] , 422));
+        }
+
+        $status_code = 0;
+        $response_data = [];
+
+        DB::beginTransaction();
+        try {
+            $user = User::create(array_merge($validated , ["role_id" => Role::NURSE]));
+            Nurse::create(
+                array_merge($validated, [
+                "user_id" => $user->id
+            ]));
+            $user->markEmailAsVerified();
+            
+            DB::commit();
+
+            $status_code = 200;
+            $response_data = ["status" => "created" , "data" => $validated];
+
+        } catch ( Exception $expception) {
+            DB::rollBack();
+            $status_code = 500;
+            $response_data = ["status" => "uncreated"];
+        }
+        return response()->json($response_data , $status_code);
     }
 
 
@@ -135,13 +233,14 @@ class NurseController extends Controller
      *              @OA\Property(property="password",type="string"),
      *              @OA\Property(property="phone_number",type="string"),
      *              @OA\Property(property="address",type="string"),
-     *              @OA\Property(property="gender",type="integer" , enum=App\Enums\Gender::class),
+     *              @OA\Property(property="gender",type="integer" , ref="#/components/schemas/Gender"),
      *              @OA\Property(property="birth_date",type="date"),
      *              @OA\Property(property="departement_id",type="integer"),
-     *              @OA\Property(property="specialization",type="integer" , enum=App\Enums\MedicalSpecialization::class),
+     *              @OA\Property(property="specialization",type="integer" , ref="#/components/schemas/MedicalSpecialization"),
      *              @OA\Property(property="short_description",type="string"),
-     *              @OA\Property(property="rate",type="integer", enum=App\Enums\Rate::class),
+     *              @OA\Property(property="rate",type="integer", ref="#/components/schemas/Rate"),
      *              @OA\Property(property="doctor_id",type="integer"),
+     *              @OA\Property(property="assigned_at",type="date"),
      *          ),
      *      ),
      *  )
@@ -151,21 +250,13 @@ class NurseController extends Controller
         $this->authorize('update' , $nurse);
 
         $validated = $request->validated();
-        $user_data = Arr::except($validated , ['rate' , 'short_description' , 'specialization' , 'doctor_id']);
-
         $response_data = [];
         $status_code = 0;
 
         DB::beginTransaction();
         try {
-            $nurse->user->update($user_data);
-            $nurse->update([
-                "rate" => $validated["rate"] ?? $nurse->rate,
-                "short_description" => $validated["short_description"] ?? $nurse->short_description,
-                "doctor_id" => $validated["doctor_id"] ?? $nurse->doctor_id,
-                "specialization" => $validated["specialization"] ?? $nurse->specialization,
-                "'doctor_id'" => $validated['doctor_id'] ?? $nurse->doctor_id
-            ]);
+            $nurse->user->update($validated);
+            $nurse->update($validated);
             DB::commit();
 
             $response_data = Controller::formatData(
@@ -247,31 +338,6 @@ class NurseController extends Controller
         );
     }
 
-    /**
-     *  @OA\Get(
-     *      path="/api/nurses/{id}/doctor/",
-     *      tags={"Admin"},
-     *      operationId = "nurseDoctor",
-     *      summary = "get responsible doctor",
-     *      @OA\Parameter(name="id", description="nurse's id" , in="path", required=true,
-     *          @OA\Schema(
-     *              type="integer"
-     *          )),
-     *      description= "Get Responsible Doctor Endpoint.",
-     *      @OA\Response(response="200" , description="OK"),
-     *      @OA\Response(response="403", description="Forbidden"),
-     *  )
-     */
-    protected function doctor($id) {
-        $nurse = NurseController::getNurseOr404($id);
-        $this->authorize("view" , $nurse);
-        return response(
-            Controller::formatData(
-                $nurse->doctor,
-                DoctorController::PATIENT_READ_RESPONSE_FORMAT
-            )
-        );
-    }
 
 
     /**
@@ -283,10 +349,16 @@ class NurseController extends Controller
      *      description= "Current Nurse Endpoint.",
      *      @OA\Response(response="200", description="OK"),
      *      @OA\Response(response="403", description="Forbidden"),
+     *      @OA\Response(response="401", description="Unauthorized")
      *  )
      */
     protected function me(Request $request) {
         $current_user = $request->user();
+        if ( $current_user == null ) {
+            return response()->json([
+                "details" => "current user is undefined"
+            ],401);
+        }
         $current_nurse = 
             Nurse::where(
                 "user_id",
@@ -301,7 +373,7 @@ class NurseController extends Controller
         return response()->json(
             Controller::formatData(
                 $current_nurse,
-                NurseController::ADMIN_READ_RESPONSE_FORMAT
+                NurseController::NURSE_READ_RESPONSE_FORMAT
             )
         );
     }
@@ -321,18 +393,25 @@ class NurseController extends Controller
      *                  @OA\Property(property="password",type="string"),
      *                  @OA\Property(property="phone_number",type="string"),
      *                  @OA\Property(property="address",type="string"),
-     *                  @OA\Property(property="gender",type="integer", enum=App\Enums\Gender::class),
+     *                  @OA\Property(property="gender",type="integer", ref="#/components/schemas/Gender"),
      *                  @OA\Property(property="birth_date",type="date"),
      *              ),
      *          ),
      *       description= "Update Nurse's Personal Info Endpoint.",
      *       @OA\Response(response="200", description="OK"),
      *       @OA\Response(response="403", description="Forbidden"),
-     *       @OA\Response(response="422", description="Unprocessable Content")
+     *       @OA\Response(response="422", description="Unprocessable Content"),
+     *       @OA\Response(response="401", description="Unauthorized")
      *  )
      */
     public function updateMe(UserForm $request) {
         $current_user = $request->user();
+        if ( $current_user == null ) {
+            return response()->json([
+                "details" => "current user is undefined"
+            ],401);
+        }
+
         $current_nurse = Nurse::where(
             "user_id" , $current_user->id
         )->first();
@@ -341,6 +420,7 @@ class NurseController extends Controller
                 "details" => "the current user is not a nurse"
             ] , 403);
         }
+        
         $validated = $request->validated();
         $current_user->update($validated);
         return response()->json(
@@ -349,37 +429,6 @@ class NurseController extends Controller
     }
 
 
-    /**
-     *  @OA\Get(
-     *      path="/api/nurses/me/doctor/",
-     *      tags={"Nurse"},
-     *      operationId = "currentNurseDoctor",
-     *      summary = "read responsible doctor for the current nurse",
-     *      description= "Current Nurse's Responsible Doctor Endpoint.",
-     *      @OA\Response(response="200" , description="OK"),
-     *      @OA\Response(response="403", description="Forbidden"),
-     *  )
-     */
-    protected function myDoctor(Request $request) {
-        $current_user = $request->user();
-        $current_nurse = 
-            Nurse::where(
-                "user_id",
-                $current_user->id
-            )->first();
-        if ( $current_nurse == null ) {
-            return response()->json([
-                "details" => "current user is not a nurse"
-            ],403);
-        }
-
-        return response()->json(
-            Controller::formatData(
-                $current_nurse->doctor,
-                DoctorController::PATIENT_READ_RESPONSE_FORMAT
-            )
-        );
-    }
     
     public function paginate($items, $perPage = 5, $page = null, $options = [])
     {

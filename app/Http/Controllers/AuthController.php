@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Role;
 use App\Http\Requests\LoginForm;
 
 class AuthController extends Controller {
@@ -35,7 +36,7 @@ class AuthController extends Controller {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        return $this->respondWithToken($token); # If all credentials are correct - we are going to generate a new access token and send it back on response
+        return $this->respondWithToken(["token" => $token , "role_id" => $request->user()->role_id]); # If all credentials are correct - we are going to generate a new access token and send it back on response
    }
 
 

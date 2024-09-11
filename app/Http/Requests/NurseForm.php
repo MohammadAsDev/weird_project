@@ -27,8 +27,7 @@ class NurseForm extends UserForm
     {
         if ( $this->isMethod("post") ) {
             return array_merge(parent::rules() , [
-                // 'departement_id' => "required|integer",
-                'doctor_id' => ["required","integer" , new ExistRule()],
+                'departement_id' => ["integer" , new ExistRule()],
                 'short_description' => "required|string|max:500",
 
                 'rate' => [
@@ -42,7 +41,7 @@ class NurseForm extends UserForm
                     "integer",
                     new DoctorSpecRule(),
                 ],
-
+                "assigned_at" => "required|date|before_or_equal:today"
             ]);
             
         } else if ( $this->isMethod("put") ) {
@@ -55,7 +54,7 @@ class NurseForm extends UserForm
                     "integer",
                     new UserRateRule(),
                 ],  
-
+                "assigned_at" => "date|before_or_equal:today",
 
                 'specialization' => [
                     "integer",

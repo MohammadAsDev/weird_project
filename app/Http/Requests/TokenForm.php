@@ -2,19 +2,19 @@
 
 namespace App\Http\Requests;
 
-use App\Rules\ExistRule;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class ClinicForm extends FormRequest
+class TokenForm extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      *
      * @return bool
      */
-    public function authorize() {       // we are using policies
+    public function authorize()
+    {
         return true;
     }
 
@@ -29,18 +29,11 @@ class ClinicForm extends FormRequest
      * @return array
      */
     public function rules()
-    { 
+    {
         if ( $this->isMethod('POST') ) {
             return [
-                'clinic_code' => 'required|string|unique:clinics',
-                'departement_id' => ['integer' , new ExistRule()],
-            ];
-        } else if ( $this->isMethod('PUT') ) {
-            return [
-                'departement_id' => ['integer' , new ExistRule()],
-                'clinic_code' => 'string|unique:clinics',
+                "token" => "required|string|min:10|max:10"
             ];
         }
-        
     }
 }

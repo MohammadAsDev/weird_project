@@ -16,14 +16,8 @@ class AppointementPolicy
         return $role == Role::ADMIN || $role == Role::STAFF;
     }    
 
-    private function isAdminOrStaffOrPatient(User $user) {
-        $role = $user->getRoleID();
-        return $role == Role::ADMIN || $role == Role::STAFF || $role == Role::PATIENT;
-    }   
-
     private function isDoctorOrPatient(User $user) {
-        $role = $user->getRoleID();
-        return $role == Role::DOCTOR || $role == Role::PATIENT;    
+        return $this->isDoctor($user) || $this->isPatient($user);    
     }
 
     private function isDoctor(User $user) {
@@ -35,6 +29,8 @@ class AppointementPolicy
         $role = $user->getRoleID();
         return $role == Role::PATIENT;
     }
+
+    
 
     /**
      * Determine whether the user can view any models.
@@ -106,9 +102,11 @@ class AppointementPolicy
     {
         $patient_id = $appointement->patient_id;
         $doctor_id = $appointement->doctor_id;
-        $is_patient = $user->id == $patient_id;
-        $is_doctor = $user->id == $doctor_id;
-        return $this->isAdminOrStaff($user) || $is_patient || $is_doctor;
+
+        $issued_patient = $user->id == $patient_id && $this->isPatient($user);
+        $issued_doctor = $user->id == $doctor_id && $this->isDoctor($user);
+        
+        return $this->isAdminOrStaff($user) || $issued_patient || $issued_doctor;
     }
 
     /**
@@ -134,8 +132,8 @@ class AppointementPolicy
         $patient_id = $appointement->patient_id;
         $doctor_id = $appointement->doctor_id;
 
-        $issued_patient = $user->id == $patient_id;
-        $issued_doctor = $user->id == $doctor_id;
+        $issued_patient = $user->id == $patient_id && $this->isPatient($user);
+        $issued_doctor = $user->id == $doctor_id && $this->isDoctor($user);
         
         return $this->isAdminOrStaff($user) || $issued_patient || $issued_doctor;
     }

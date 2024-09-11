@@ -6,7 +6,6 @@ use App\Enums\Role;
 use App\Models\Doctor;
 use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
-use PhpParser\Comment\Doc;
 
 class DoctorPolicy
 {
@@ -16,6 +15,12 @@ class DoctorPolicy
         $role = $user->getRoleID();
         $is_admin_or_staff = $role == Role::ADMIN || $role == Role::STAFF;
         return $is_admin_or_staff;
+    }
+
+    private function isPatient(User $user) {
+        $role = $user->getRoleID();
+        $is_patient = $role == Role::PATIENT;
+        return $is_patient;
     }
 
     /**
@@ -67,6 +72,19 @@ class DoctorPolicy
     }
 
     /**
+     * Determine whether the user can view the model-realated statistics.
+     *
+     * @param  \App\Models\User  $user
+     * @param  \App\Models\Doctor  $doctor
+     * @return \Illuminate\Auth\Access\Response|bool
+     */
+    public function viewStats(User $user)
+    {
+        $role = $user->getRoleID();
+        return $this->isAdminOrStaff($user) || $role == Role::PATIENT;
+    }
+
+    /**
      * Determine whether the user can create models.
      *
      * @param  \App\Models\User  $user
@@ -75,6 +93,17 @@ class DoctorPolicy
     public function create(User $user)
     {
         return $this->isAdminOrStaff($user);
+    }
+
+    /**
+     * Determine whether the user can search between models.
+     *
+     * @param  \App\Models\User  $user
+     * @return \Illuminate\Auth\Access\Response|bool
+     */
+    public function search(User $user)
+    {
+        return $this->isAdminOrStaff($user) || $this->isPatient($user);
     }
 
     /**

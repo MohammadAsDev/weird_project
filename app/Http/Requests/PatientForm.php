@@ -37,12 +37,6 @@ class PatientForm extends UserForm
         } else if ( $this->isMethod("put") ) {
             return array_merge(parent::rules() , [
                 'ssn' => "string|unique:users|regex:/[0-9]{11}/",
-                'aspirin_allergy' => "boolean",
-                
-                'blood_type' => [
-                    'integer',
-                    new BloodTypeRule(),
-                ] 
             ]);
         }
     }

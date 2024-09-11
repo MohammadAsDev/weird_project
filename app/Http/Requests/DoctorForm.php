@@ -5,7 +5,6 @@ namespace App\Http\Requests;
 use App\Rules\DoctorSpecRule;
 use App\Rules\ExistRule;
 use App\Rules\UserRateRule;
-use Illuminate\Validation\Rules\Exists;
 
 class DoctorForm extends UserForm
 {
@@ -37,6 +36,9 @@ class DoctorForm extends UserForm
                     "integer",
                     new DoctorSpecRule()
                 ],
+                "assigned_at" => "required|date|before_or_equal:today",
+                'departement_id' => ['integer', new ExistRule()],
+
             ]);
             
         } else if ( $this->isMethod("PUT") ) {
@@ -47,6 +49,7 @@ class DoctorForm extends UserForm
                     "integer",
                     new UserRateRule(),
                 ],
+                "assigned_at" => "date|before_or_equal:today",
 
                 'specialization' => [
                     "integer",

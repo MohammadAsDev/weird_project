@@ -3,13 +3,10 @@
 namespace Database\Seeders;
 
 use App\Enums\ClinicType;
-use App\Enums\DoctorSpecialization;
 use App\Enums\Gender;
 use App\Enums\MedicalSpecialization;
 use App\Enums\Rate;
 use App\Enums\Role;
-use App\Rules\DoctorSpecRule;
-use Error;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -27,22 +24,31 @@ class DatabaseSeeder extends Seeder
             "role_id" => Role::ADMIN,
             "role_description" => "Amdinistration"
         ]);
+        
         \App\Models\Role::create([
             "role_id" => Role::STAFF,
             "role_description" => "System and Users Management"
         ]);
+        
         \App\Models\Role::create([
             "role_id" => Role::DOCTOR,
             "role_description" => "Doctors"
         ]);
+        
         \App\Models\Role::create([
             "role_id" => Role::NURSE,
             "role_description" => "Nurses"
         ]);
+        
         \App\Models\Role::create([
             "role_id"  => Role::PATIENT,
             "role_description" => "Patients"
         ]);
+
+        // \App\Models\Role::create([
+        //     "role_id"  => Role::ANONYMOUS,
+        //     "role_description" => "Anonymous"
+        // ]);
 
 
         $departement = \App\Models\Departement::create([
@@ -52,10 +58,10 @@ class DatabaseSeeder extends Seeder
         ]);
 
         // Create Admin User
-        \App\Models\User::create([
-            'first_name' => 'Mohammad',
-            'last_name' => 'Hamdan',
-            'phone_number' => '0997194988',
+        $admin = \App\Models\User::create([
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'phone_number' => '0997194923',
             'email' => 'admin@gmail.com',
             'password' => "admin",
             'birth_date' => "2001-12-04",
@@ -63,6 +69,7 @@ class DatabaseSeeder extends Seeder
             "role_id" => Role::ADMIN,
             "gender" => Gender::MALE,
         ]);
+        $admin->markEmailAsVerified();
 
         // Create a new Doctor
         $doctor_user = \App\Models\User::create([
@@ -76,23 +83,23 @@ class DatabaseSeeder extends Seeder
             "role_id" => Role::DOCTOR,
             "gender" => Gender::MALE,
         ]);
+        $doctor_user->markEmailAsVerified();
 
 
-        $doctor = \App\Models\Doctor::create([
+        \App\Models\Doctor::create([
             'user_id' => $doctor_user->id,
             'departement_id' => $departement->id,
             'specialization' => MedicalSpecialization::ANESTHESIOLOGY,
-            'rate' => Rate::GOOD,
+            'rate' => Rate::SENIOR,
             'short_description' => "testing doctor",
+            "assigned_at" => "2010-05-05"
         ]);
 
 
         // Create a new Clinic
         \App\Models\Clinic::create([
-            'doctor_id' => $doctor->user_id,
             'departement_id' => $departement->id,
             'clinic_code' => "TEST",
-            "clinic_type" => ClinicType::INTERNAL
         ]);
 
         // Create a new Nures
@@ -107,14 +114,15 @@ class DatabaseSeeder extends Seeder
             "role_id" => Role::NURSE,
             "gender" => Gender::MALE,
         ]);
+        $nurse_user->markEmailAsVerified();
 
         \App\Models\Nurse::create([
             'rate' => Rate::GOOD,
             'departement_id' => $departement->id,
-            'doctor_id' => $doctor->user_id,
             'specialization' => MedicalSpecialization::INTERNAL,
             'short_description' => "testing nurse",
             'user_id' => $nurse_user->id,
+            "assigned_at" => "2010-05-05"
         ]);
 
 
@@ -131,12 +139,8 @@ class DatabaseSeeder extends Seeder
             "gender" => Gender::MALE,
             "ssn" => "00000000000"
         ]);
+        $patient_user->markEmailAsVerified();
 
-        \App\Models\Patient::create([
-            'blood_type' => 2,
-            'aspirin_allergy' => true,
-            'user_id' => $patient_user->id,
-        ]);
 
     }
 }

@@ -5,17 +5,17 @@ namespace App\Http\Controllers\Doctors;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DoctorForm;
 use App\Enums\Role;
-use App\Http\Controllers\ClinicController;
-use App\Http\Controllers\Nurses\NurseController;
+use App\Http\Controllers\DepartementController;
+use App\Http\Controllers\Patients\PatientController;
 use App\Http\Requests\UserForm;
 use App\Models\Doctor;
 use App\Models\User;
 use Exception;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 
 class DoctorController extends Controller
@@ -38,10 +38,11 @@ class DoctorController extends Controller
         "specialization" => "specialization",
         "short_description" => "short_description",
         "rate" => "rate",
+        'assigned_at' => 'assigned_at',
         "structured" => true
     ];
 
-    public const ADMIN_READ_RESPONSE_FORMAT = [
+    public const ADMIN_READ_RESPONSE_FORMAT = [     // Admin's View on Doctor's Data
         "user" => [
             "id" => "id",
             "first_name" => "first_name",
@@ -54,15 +55,56 @@ class DoctorController extends Controller
             "profile_picture_path" => "profile_picture_path",
             "structured" => false
         ],
-        
         "departement" => "departement",
         "specialization" => "specialization",
         "short_description" => "short_description",
         "rate" => "rate",
+        'assigned_at' => 'assigned_at',
         "structured" => true
     ];
 
-    public const PATIENT_READ_RESPONSE_FORMAT = [
+    public const ADMIN_READ_DOCTOR_ONLY_FORMAT = [     // Admin's View on Doctor's Data
+        "user" => [
+            "id" => "id",
+            "first_name" => "first_name",
+            "last_name" => "last_name",
+            "email" => "email",
+            "phone_number" => "phone_number",
+            "gender" => "gender",
+            "address" => "address",
+            "birth_date" => "birth_date",
+            "profile_picture_path" => "profile_picture_path",
+            "structured" => false
+        ],
+        "specialization" => "specialization",
+        "short_description" => "short_description",
+        "rate" => "rate",
+        'assigned_at' => 'assigned_at',
+        "structured" => true
+    ];
+
+    public const DOCTOR_READ_RESPONSE_FORMAT = [     // Admin's View on Doctor's Data
+        "user" => [
+            "id" => "id",
+            "first_name" => "first_name",
+            "last_name" => "last_name",
+            "email" => "email",
+            "phone_number" => "phone_number",
+            "gender" => "gender",
+            "address" => "address",
+            "birth_date" => "birth_date",
+            "profile_picture_path" => "profile_picture_path",
+            "structured" => false
+        ],
+        "departement" => DepartementController::ALL_DEPARTEMENT_RESPONSE_FORMAT,
+        "specialization" => "specialization",
+        "short_description" => "short_description",
+        "rate" => "rate",
+        'assigned_at' => 'assigned_at',
+        "structured" => true
+    ];
+
+    public const PATIENT_READ_RESPONSE_FORMAT = [   // Patient's View on Doctor's Data
         "user" => [
             "first_name" => "first_name",
             "last_name" => "last_name",
@@ -89,7 +131,7 @@ class DoctorController extends Controller
      * @OA\Post(
      *      path="/api/doctors",
      *      operationId = "createDoctor",
-     *      summary = "add new doctors to the system",
+     *      summary = "add a new doctor to the system",
      *      description= "Create Doctor Endpoint.",
      *      tags={"Admin"},
      *      @OA\Response(response="200", description="OK"),
@@ -110,7 +152,8 @@ class DoctorController extends Controller
      *                  "departement_id",
      *                  "specialization",
      *                  "short_description",
-     *                  "rate"
+     *                  "assigned_at",
+     *                  "rate",
      *              },
      *              @OA\Property(property="first_name",type="string"),
      *              @OA\Property(property="last_name",type="string"),
@@ -118,12 +161,13 @@ class DoctorController extends Controller
      *              @OA\Property(property="password",type="string"),
      *              @OA\Property(property="phone_number",type="string"),
      *              @OA\Property(property="address",type="string"),
-     *              @OA\Property(property="gender",type="integer", enum=App\Enums\Gender::class),
+     *              @OA\Property(property="gender",type="integer", ref="#/components/schemas/Gender"),
      *              @OA\Property(property="birth_date",type="date"),
      *              @OA\Property(property="departement_id",type="integer"),
-     *              @OA\Property(property="specialization",type="integer" , enum=App\Enums\MedicalSpecialization::class),
+     *              @OA\Property(property="specialization",type="integer" , ref="#/components/schemas/MedicalSpecialization"),
      *              @OA\Property(property="short_description",type="string"),
-     *              @OA\Property(property="rate",type="integer" , enum=App\Enums\Rate::class)
+     *              @OA\Property(property="assigned_at",type="date"),
+     *              @OA\Property(property="rate",type="integer" , ref="#/components/schemas/Rate")
      *          ),
      *      ),
      *  ),
@@ -133,20 +177,27 @@ class DoctorController extends Controller
         $this->authorize('create' , Doctor::class);
         
         $validated = $request->validated();
-        $user_data = Arr::except($validated , ['specialization' , 'rate' , 'short_description']);
-        $user_data = array_merge($user_data , ["role_id" => Role::DOCTOR->value]);
+        if ( !key_exists("departement_id" , $validated) ) {
+            throw new HttpResponseException(response()->json([
+                "errors" => [
+                    "departement_id" => [
+                        "departement_id should be supported for this end-point"
+                    ]
+                ]
+            ]));
+        }
 
         DB::beginTransaction();
         $status_code = 0;
         $repsonse_data = [];
         try {
-            $user = User::create($user_data);
-            Doctor::create([
-                'user_id' => $user->id,
-                'specialization' => $validated['specialization'],
-                'rate' => $validated['rate'],
-                'short_description' => $validated['short_description'],
-            ]);
+            $user = User::create(array_merge($validated , ["role_id" => Role::DOCTOR]));
+            $user->markEmailAsVerified();
+
+            Doctor::create(array_merge([
+                'user_id' => $user->id
+            ] , $validated));
+            
             DB::commit();
      
             $status_code = 200;
@@ -191,8 +242,7 @@ class DoctorController extends Controller
             Controller::formatData(
                 $doctor ,
                 DoctorController::ADMIN_READ_RESPONSE_FORMAT
-            ),
-         200);
+            ),200);
     }
 
     /**
@@ -211,12 +261,13 @@ class DoctorController extends Controller
      *              @OA\Property(property="password",type="string"),
      *              @OA\Property(property="phone_number",type="string"),
      *              @OA\Property(property="address",type="string"),
-     *              @OA\Property(property="gender",type="integer" , enum=App\Enums\Gender::class),
+     *              @OA\Property(property="gender",type="integer" , ref="#/components/schemas/Gender"),
      *              @OA\Property(property="birth_date",type="date"),
      *              @OA\Property(property="departement_id",type="integer"),
-     *              @OA\Property(property="specialization",type="integer" , enum=App\Enums\MedicalSpecialization::class),
+     *              @OA\Property(property="specialization",type="integer" , ref="#/components/schemas/MedicalSpecialization"),
      *              @OA\Property(property="short_description",type="string"),
-     *              @OA\Property(property="rate",type="integer" , enum=App\Enums\Rate::class)
+     *              @OA\Property(property="assigned_at",type="date"),
+     *              @OA\Property(property="rate",type="integer" , ref="#/components/schemas/Rate")
      *          ),
      *      ),
      *      @OA\Parameter(
@@ -238,20 +289,14 @@ class DoctorController extends Controller
         $this->authorize('update' , $doctor);
 
         $validated = $request->validated();
-        $user_data = Arr::except($validated , ['specialization' , 'rate' , 'short_description']);
-
+        
         $status_code = 0;
         $response_data = [];
 
         DB::beginTransaction();
         try {
-            $doctor->user->update($user_data);
-            $doctor->update([
-                "specialization" => $validated['specialization'] ?? $doctor->specialization,
-                "rate" => $validated["rate"] ?? $doctor->rate,
-                "short_description" => $validated["short_description"] ?? $doctor->short_description,
-                "departement_id" => $validated["departement_id"] ?? $doctor->departement_id
-            ]);
+            $doctor->user->update($validated);
+            $doctor->update($validated);
             DB::commit();
 
             $status_code = 200;
@@ -329,61 +374,49 @@ class DoctorController extends Controller
         ));
     }
 
-    /**
-     *  @OA\Get(
-     *      path="/api/doctors/{id}/nurses",
-     *      tags={"Admin"},
-     *      operationId = "listDoctorNurses",
-     *      summary = "list doctor's nurses",
-     *      description= "List Specific Doctor's Nurses Endpoint.",
-     *      @OA\Parameter(name="id" , description="doctor's id" , in="path" , required=true,
-     *          @OA\Schema(
-     *              type="integer"
-     *          )),
-     *      @OA\Response(response="200", description="OK"),
-     *      @OA\Response(response="404", description="Object Not Found"),
-     *      @OA\Response(response="403", description="Forbidden")
-     *  )
-     */
-    protected function nurses($id) {
-        $doctor = DoctorController::getDoctorOr404($id);
-        $this->authorize("viewNurses", $doctor);
-        $nurses = $doctor->nurses;
-        return response()->json($this->paginate(
-            Controller::formatCollection(
-                $nurses,
-                NurseController::ADMIN_INDEX_RESPONSE_FORMAT
-            )
-        ));
-    }
 
     /**
      *  @OA\Get(
-     *       path="/api/doctors/{id}/clinics",
-     *       tags={"Admin"},
-     *       operationId = "listDoctorClinics",
-     *       summary = "list doctor's clinics",
-     *       description= "List Specific Doctor's Clinics Endpoint.",
-     *       @OA\Parameter(name="id" , description="doctor's id" , in="path" , required=true,
+     *      path="/api/doctors/search/",
+     *      tags={"Patient" , "Admin"},
+     *      operationId = "DoctorSearch",
+     *      summary = "Seach on doctors using their full names",
+     *      description= "Seach on Doctors Endpoint.",
+     *      @OA\Parameter(name="name" , description="doctor's full name" , in="query" , required=false,
      *          @OA\Schema(
-     *              type="integer"
+     *              type="string"
      *          )),
-     *       @OA\Response(response="200", description="OK"),
-     *       @OA\Response(response="404", description="Object Not Found"),
-     *       @OA\Response(response="403", description="Forbidden")
+     *      @OA\Response(response="200", description="OK"),
+     *      @OA\Response(response="403", description="Forbidden"),
+     *      @OA\Response(response="401", description="Unauthorized")
      *  )
      */
-    protected function clinics($id) {
-        $doctor = DoctorController::getDoctorOr404($id);
-        $this->authorize("viewClinics" , $doctor);
-        $clinics = $doctor->clinics;
+    public function search(Request $request) {
+        $this->authorize("search" , Doctor::class);
+
+        $current_user = $request->user();
+        if ( !$current_user->hasVerifiedEmail() ) {
+            return response([
+                "details" => "your email is not verified."
+            ],401);
+        }
+
+        $query = htmlentities($request->query("name"));
+        $suggested_doctors = 
+            Doctor::join("users" , "users.id" , "doctors.user_id")->where(
+                DB::raw(
+                    "concat(first_name , ' ' , last_name)"
+                ) , "LIKE" , "%".$query."%")->get();
+
+
         return response()->json($this->paginate(
             Controller::formatCollection(
-                $clinics,
-                ClinicController::PATIENT_CLINIC_ONLY_RESPONSE_FOMAT
+                $suggested_doctors,
+                PatientController::DOCTOR_READ_RESPONSE_FORMAT
             )
-        ));
+        ), 200);
     }
+
 
 
     /**
@@ -395,10 +428,16 @@ class DoctorController extends Controller
      *       description= "Current Doctor Endpoint.",
      *       @OA\Response(response="200", description="OK"),
      *       @OA\Response(response="403", description="Forbidden"),
+     *       @OA\Response(response="401", description="Unauthorized")
      *  )
      */
     public function me(Request $request) {
         $current_user = $request->user();
+        if ( $current_user == null ) {
+            return response()->json([
+                "details" => "current user is undefined"
+            ],401);
+        }
         $current_doctor = Doctor::where(
             "user_id" , $current_user->id
         )->first();
@@ -410,7 +449,7 @@ class DoctorController extends Controller
         return response()->json(
             Controller::formatData(
                 $current_doctor,
-                DoctorController::ADMIN_READ_RESPONSE_FORMAT
+                DoctorController::DOCTOR_READ_RESPONSE_FORMAT
             )
         );
     }
@@ -422,6 +461,7 @@ class DoctorController extends Controller
      *       path="/api/doctors/me",
      *       tags={"Doctor"},
      *       operationId = "updateCurrentDoctor",
+     *       description= "Update Doctor's Personal Info Endpoint.",
      *       summary = "update personal info for current doctor",
      *          @OA\RequestBody(
      *              @OA\JsonContent(
@@ -432,18 +472,23 @@ class DoctorController extends Controller
      *                  @OA\Property(property="password",type="string"),
      *                  @OA\Property(property="phone_number",type="string"),
      *                  @OA\Property(property="address",type="string"),
-     *                  @OA\Property(property="gender",type="integer" , enum=App\Enums\Gender::class),
+     *                  @OA\Property(property="gender",type="integer" , ref="#/components/schemas/Gender"),
      *                  @OA\Property(property="birth_date",type="date"),
      *              ),
      *          ),
-     *       description= "Update Doctor's Personal Info Endpoint.",
      *       @OA\Response(response="200", description="OK"),
      *       @OA\Response(response="403", description="Forbidden"),
-     *       @OA\Response(response="422", description="Unprocessable Content")
+     *       @OA\Response(response="422", description="Unprocessable Content"),
+     *       @OA\Response(response="401", description="Unauthorized")
      *  )
      */
     public function updateMe(UserForm $request) {
         $current_user = $request->user();
+        if ( $current_user == null ) {
+            return response()->json([
+                "details" => "current user is undefined"
+            ],401);
+        }
         $current_doctor = Doctor::where(
             "user_id" , $current_user->id
         )->first();
@@ -460,65 +505,41 @@ class DoctorController extends Controller
     }
 
 
-    /**
-     *  @OA\Get(
-     *      path="/api/doctors/me/nurses",
-     *      tags={"Doctor"},
-     *      operationId = "listMyNurses",
-     *      summary = "list current doctor's nurse info",
-     *      description= "List Nurses Working With The Current Doctor.",
-     *      @OA\Response(response="200", description="OK"),
-     *      @OA\Response(response="403", description="Forbidden"),
-     *  )
-     */
-    public function myNurses(Request $request) {
-        $current_user = $request->user();
-        $current_doctor = Doctor::where(
-            "user_id" , $current_user->id
-        )->first();
-        if ( $current_doctor == null ) {
-            return response()->json([
-                "details" => "the current user is not a doctor"
-            ] , 403);
-        }
-        $nurses = $current_doctor->nurses;
-       return response()->json($this->paginate(
-            Controller::formatCollection(
-                $nurses,
-                NurseController::PATIENT_READ_RESPONSE_FORMAT
-            )
-       ));
-    }
 
 
     /**
      *  @OA\Get(
-     *      path="/api/doctors/me/clinics",
-     *      tags={"Doctor"},
-     *      operationId = "listMyClinics",
-     *      summary = "list current doctor's clinic info",
-     *      description= "List Clinics For The Current Doctor Endpoint.",
+     *      path="/api/statistics/best_doctors",
+     *      tags={"Patient" , "Admin"},
+     *      operationId = "bestDoctors",
+     *      summary = "list the best four doctors",
+     *      description= "Best Doctors Report Endpoint.",
      *      @OA\Response(response="200", description="OK"),
      *      @OA\Response(response="403", description="Forbidden"),
+     *      @OA\Response(response="401", description="Unauthorized"),
      *  )
      */
-    public function myClinics(Request $request) {
+    public function bestDoctors(Request $request) {
+        $this->authorize('viewStats' , Doctor::class);
         $current_user = $request->user();
-        $current_doctor = Doctor::where(
-            "user_id" , $current_user->id
-        )->first();
-        if ( $current_doctor == null ) {
+        if ( $current_user == null ) {
             return response()->json([
-                "details" => "the current user is not a doctor"
-            ] , 403);
+                "details" => "current user is undefined"
+            ],401);
         }
-        $clinics = $current_doctor->clinics;
-       return response()->json($this->paginate(
-            Controller::formatCollection(
-                $clinics,
-                ClinicController::PATIENT_CLINIC_ONLY_RESPONSE_FOMAT
+        if ( !$current_user->hasVerifiedEmail() ) {
+            return response()->json([
+                "details" => "your email is not verified."
+            ],401);
+        }
+        $best_doctors = Doctor::orderBy('rate' , 'DESC')->take(4)->get();
+        return response()->json([
+            "details" => "best doctors in the hospital",
+            "data" => Controller::formatCollection(
+                $best_doctors,
+                DoctorController::PATIENT_READ_RESPONSE_FORMAT
             )
-       ));
+        ]);
     }
 
     public function paginate($items, $perPage = 5, $page = null, $options = []) {

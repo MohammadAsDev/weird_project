@@ -2,8 +2,9 @@
 
 namespace App\Http\Requests;
 
-use App\Rules\AppointementDateRule;
+use App\Rules\AppointementStatusRule;
 use App\Rules\ExistRule;
+use App\Rules\PeriodRule;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -33,7 +34,7 @@ class AppointementForm extends FormRequest
     {
         if ( $this->isMethod('POST') ){
             return [
-                "clinic_id" => [
+                "doctor_id" => [
                     "required",
                     "integer",
                     new ExistRule()
@@ -42,23 +43,20 @@ class AppointementForm extends FormRequest
                     "required",
                     "date",
                     "after:today" , 
-                    new AppointementDateRule()
+                ],
+                "period" => [
+                    "required",
+                    "string",
+                    new PeriodRule()
                 ]
             ];
         } else if ( $this->isMethod('PUT') ) {
             return [
-                'next_date' => [
-                    "required","date","after:tody",
-                    new AppointementDateRule()
-                ],
-                'status'  => "required|integer",
-                "attachement.breathing_rate" => "required|numeric|min:0|max:100",
-                // 'attachement.blood_pressure' => "required|numeric|",
-                'attachement.body_temperature' => "required|numeric|min:0|max:100",
-                'attachement.pulse_rate' => "required|numeric|max:100|min:0",
-                'attachement.medical_notes' => "string",
-                "attachement.prescription" => "string"
-
+                "status" => [
+                    "required",
+                    "integer",
+                    new AppointementStatusRule()
+                ]
             ];
         }
         

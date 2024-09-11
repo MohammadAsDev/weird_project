@@ -16,24 +16,11 @@ class CreateClinicsTable extends Migration
 
         Schema::create('clinics', function (Blueprint $table) {
             $table->id();
-            $table->integer('clinic_type');
-            $table->bigInteger('doctor_id')->unsigned();
-
-            // internal clinics
-            $table->bigInteger('departement_id')->unsigned()->nullable();
-            $table->string('clinic_code')->nullable();
-
-            // external clinics
-            $table->decimal('clinic_latitude')->nullable();
-            $table->decimal('clinic_longitude')->nullable();
+            $table->bigInteger('departement_id')->unsigned();
+            $table->string('clinic_code')->unique();
             
             $table->timestamps();
 
-            $table->index("clinic_type");   // make query much faster
-
-            $table->index('doctor_id');
-            $table->foreign('doctor_id')->references('user_id')->on('doctors');
-            
             $table->index('departement_id');
             $table->foreign('departement_id')->references('id')->on('departements');
         });
@@ -47,8 +34,6 @@ class CreateClinicsTable extends Migration
     public function down()
     {
         Schema::drop('clinics' , function(Blueprint $table) {
-            $table->dropIndex('clinic_type');
-
             $table->dropForeign('doctor_id');
             $table->dropIndex('departement_id');
             $table->dropForeign('departement_id');

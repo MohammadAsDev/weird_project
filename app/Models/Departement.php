@@ -20,6 +20,6 @@ class Departement extends Model
     ];
 
     public function clinics() {
-        return $this->hasMany(Clinic::class , "departement_id" , "user_id");
+        return $this->hasMany(Clinic::class , "departement_id" , "id");
     }
 }

@@ -30,12 +30,20 @@ class RoutineTestForm extends FormRequest
      */
     public function rules()
     {
-        if ( $this->isMethod("put") ) {
+        if ( $this->isMethod("post") ) {
             return [
-                'breathing_rate' => "numeric",
-                'blood_pressure' => "numeric",
-                'body_temperature' => "numeric",
-                'pulse_rate' => "numeric",
+                "breathing_rate" => "required|numeric|min:0|max:100",
+                'body_temperature' => "required|numeric|min:0|max:100",
+                'pulse_rate' => "required|numeric|max:100|min:0",
+                'medical_notes' => "string",
+                "prescription" => "string"
+            ];
+        }
+        else if ( $this->isMethod("put") ) {
+            return [
+                'breathing_rate' => "numeric|min:0|max:100",
+                'body_temperature' => "numeric|min:0|max:100",
+                'pulse_rate' => "numeric|min:0|max:100",
                 'medical_notes' => "string",
                 "prescription" => "string"
             ];

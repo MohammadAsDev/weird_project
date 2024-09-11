@@ -2,23 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\Role;
+use App\Enums\AppointementStatus;
 use App\Http\Controllers\Doctors\DoctorController;
 use App\Http\Controllers\Patients\PatientController;
 use App\Http\Requests\AppointementForm;
+use App\Http\Requests\RoutineTestForm;
 use App\Models\Appointement;
-use App\Models\Clinic;
 use App\Models\Doctor;
-use App\Models\Patient;
 use App\Models\RoutineTest;
 use Carbon\Carbon;
-use Exception;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\DB;
 
 class AppointementController extends Controller
 {
@@ -26,62 +22,52 @@ class AppointementController extends Controller
     const ALL_APPOINTMENT_INDEX_RESPONSE_FORMAT = [
         "id" => "id",
         "date" => "date",
-        "next_date" => "next_date",
-        "status" => "status"
+        "period" => "period",
+        "status" => "status",
+        "pateint_id" => "patient_id",
+        "doctor_id" => "doctor_id",
+    ];
+
+    const PATIENT_APPOINTMENT_INDEX_RESPONSE_FORMAT = [
+        "id" => "id",
+        "date" => "date",
+        "period" => "period",
+        "status" => "status",
+        "doctor_id" => "doctor_id",
+    ];
+
+    const DOCTOR_APPOINTMENT_INDEX_RESPONSE_FORMAT = [
+        "id" => "id",
+        "date" => "date",
+        "period" => "period",
+        "status" => "status",
+        "pateint_id" => "patient_id",
     ];
 
     const ADMIN_APPOINTMENT_RESPONSE_FORMAT = [
         "id" => "id",
         "date" => "date",
-        "next_date" => "next_date",
+        "period" => "period",
         "doctor" => DoctorController::ADMIN_READ_RESPONSE_FORMAT,
-        "clinic" => ClinicController::PATIENT_CLINIC_ONLY_RESPONSE_FOMAT,
-        "status" => "status"
-    ];
-
-    const PATIENT_APPOINTMENT_RESPONSE_FORMAT = [
-        "id" => "id",
-        "date" => "date",
-        "next_date" => "next_date",
-        "doctor" => DoctorController::PATIENT_READ_RESPONSE_FORMAT,
-        "clinic" => ClinicController::PATIENT_CLINIC_ONLY_RESPONSE_FOMAT,
-        "status" => "status"
-    ];
-
-    const DOCTOR_APPOINTMENT_RESPONSE_FORMAT = [
-        "id" => "id",
-        "date" => "date",
-        "next_date" => "next_date",
         "patient" => PatientController::DOCTOR_READ_RESPONSE_FORMAT,
-        "clinic" => ClinicController::PATIENT_CLINIC_ONLY_RESPONSE_FOMAT,
         "status" => "status"
     ];
 
-    private function getStartEndDate($period) {
-        $start = Carbon::now()->today();
-        $end = Carbon::now()->today();
+    const PATIENT_APPOINTMENT_RESPONSE_FORMAT = [       // Patient's View on Appointement
+        "id" => "id",
+        "date" => "date",
+        "period" => "period",
+        "doctor" => DoctorController::PATIENT_READ_RESPONSE_FORMAT,
+        "status" => "status"
+    ];
 
-        switch ($period) {
-            case "month":
-                $start = $start->startOfMonth();
-                $end = $end->endOfMonth();
-                break;
-            case "year":
-                $start = $start->startOfYear();
-                $end = $end->endOfYear();
-                break;
-            default:
-                $start = $start->startOfWeek();
-                $end = $end->endOfWeek();
-                break;
-        }
-
-        $start = $start->toDateTimeString();
-        $end = $end->toDateTimeString();
-
-        return [$start, $end];
-    }
-
+    const DOCTOR_APPOINTMENT_RESPONSE_FORMAT = [        // Doctor's View on Appointement
+        "id" => "id",
+        "date" => "date",
+        "period" => "period",
+        "patient" => PatientController::DOCTOR_READ_RESPONSE_FORMAT,
+        "status" => "status"
+    ];
 
 
     private function getAppointementOr404($appointementId) {        
@@ -91,6 +77,52 @@ class AppointementController extends Controller
             abort(404 , "appointement does not exist");
         }
         return $appointement;
+    }
+
+    private function formatAppointementSchedule(Collection $appointements , $n_days) {
+        $periods = [];
+        $start_time = 9;
+        $end_time = 16;
+        for ($i = $start_time ; $i < $end_time ; $i++) {
+            array_push($periods , sprintf("%d-%d" , $i, $i+1));
+        }
+
+        $dates = [];
+        $days = [];
+        for ($i = 1; $i <= $n_days ; $i++) {
+            $ith_date = Carbon::today()->addDays($i);
+            array_push($dates , $ith_date->toDateString());
+            array_push($days , $ith_date->dayName);
+        }
+
+        $response_data = ["working_time" => "from 9:00 to 16:00"];
+        $appointements_table = [];
+        foreach ($dates as $date){
+            $appointements_table[$date] = [];
+            foreach ($periods as $period) {
+                $appointements_table[$date][$period] = false;
+            }
+        }
+
+
+        foreach ($appointements as $appointement) {
+            $appointement_date = $appointement->date->toDateString();
+            if ($appointement->status == AppointementStatus::ACCEPTED) {
+                $appointements_table[$appointement_date][$appointement->period] = true;                
+            }
+        }
+
+        for ( $row_i = 0 ; $row_i < count($appointements_table) ; $row_i += 1 ) {
+            $ith_date = $dates[$row_i];
+            $ith_day = $days[$row_i];
+            $response_data[$ith_date] =  [
+                "date" => $ith_date,
+                "day_name" => $ith_day,
+                "periods" => $appointements_table[$ith_date]
+            ];
+        }
+
+        return $response_data;
     }
 
     /**
@@ -150,16 +182,16 @@ class AppointementController extends Controller
      *  @OA\Get(
      *      path="/api/appointements/patients/{id}/",
      *      tags={"Admin"},
-     *      operationId = "readPatientAppointements",
-     *      summary = "list patient's appointements",
+     *      operationId = "listPatientAppointements",
+     *      summary = "list appointements for specific patient",
      *      description= "Patient's Appointements Endpoint.",
      *      @OA\Parameter(name="id", description="patient's id" , in="path" , required=true,
      *          @OA\Schema(
      *              type="integer"
      *          )),
      *      @OA\Response(response="200", description="OK"),
+     *      @OA\Response(response="404", description="Object Not Found"),
      *      @OA\Response(response="403", description="Forbidden"),
-     *      @OA\Response(response="422", description="Unprocessable Content"),
      *  )
      */
     public function listPatientAppointements($id) {
@@ -175,56 +207,36 @@ class AppointementController extends Controller
     }
 
 
-    /**
-     *  @OA\Get(
-     *      path="/api/appointements/clinics/{id}/",
-     *      tags={"Admin"},
-     *      operationId = "listClinicAppointements",
-     *      summary = "list clinic's appointments",
-     *      description= "Clinic's Appointement Endpoint.",
-     *      @OA\Parameter(name="id", description="clinic's id" , in="path" , required=true,
-     *          @OA\Schema(
-     *              type="integer"
-     *          )),
-     *      @OA\Response(response="200", description="OK"),
-     *      @OA\Response(response="403", description="Forbidden"),
-     *      @OA\Response(response="404", description="Object Not Found"),
-     *  )
-     */
-    public function listClinicAppointements($id) {
-        $this->authorize("viewAny" , Appointement::class);
-        $clinic = ClinicController::getClinicOr404($id);
-        $appointements = $clinic->appointements;
-
-        return response()->json($this->paginate(
-            Controller::formatCollection(
-                $appointements,
-                AppointementController::ALL_APPOINTMENT_INDEX_RESPONSE_FORMAT
-            )
-        ));
-    }
-
 
     /**
      * @OA\Get(
      *      path="/api/appointements/me",
      *      tags={"Patient"},
      *      operationId = "listCurrentAppointements",
-     *      summary = "list current user's  appointements",
-     *      description= "Current Appointements Endpoint.",
+     *      summary = "list current patient's  appointements",
+     *      description= "Current Patient's Appointements Endpoint.",
      *      @OA\Response(response="200", description="OK"),
      *      @OA\Response(response="403", description="Forbidden"),
+     *      @OA\Response(response="401", description="Unauthorized"),
      * )
      */
     public function me(Request $request) {
         $this->authorize("viewAnyAsPatient" , Appointement::class);
-        $patient_id = $request->user()->id;
-        $appointements = Appointement::where("patient_id" , $patient_id)->get();
+        $current_user = $request->user();
+
+        if ( !$current_user->hasVerifiedEmail() ) {
+            return response([
+                "details" => "your email is not verified."
+            ],401);
+        }
+
+        $user_id = $current_user->id;
+        $appointements = Appointement::where("patient_id" , $user_id)->get();
 
         return response()->json($this->paginate(
             Controller::formatCollection(
                 $appointements,
-                AppointementController::ALL_APPOINTMENT_INDEX_RESPONSE_FORMAT
+                AppointementController::PATIENT_APPOINTMENT_INDEX_RESPONSE_FORMAT
             )
         ));
     }
@@ -243,9 +255,16 @@ class AppointementController extends Controller
      *      @OA\Response(response="200", description="OK"),
      *      @OA\Response(response="404", description="Object Not Found"),
      *      @OA\Response(response="403", description="Forbidden"),
+     *      @OA\Response(response="401", description="Unauthorized"),
      *  )
      */
-    public function readAppointement($id) {
+    public function readAppointement(Request $request, $id) {
+        $current_user = $request->user();
+        if ( !$current_user->hasVerifiedEmail() ) {
+            return response()->json([
+                "details" => "your email is not verified."
+            ],401);
+        }
         $appointement = $this->getAppointementOr404($id);
         $this->authorize("viewAsPatient" , $appointement);
         
@@ -262,10 +281,11 @@ class AppointementController extends Controller
      *  @OA\Get(
      *      path="/api/appointements/patients",
      *      tags={"Doctor"},
-     *      operationId = "listPatientAppointements",
-     *      summary = "list patients appointements",
-     *      description= "Patients Appointement Endpoint.",
+     *      operationId = "listPatientsAppointements",
+     *      summary = "list patients' appointements for the current doctor",
+     *      description= "Patients' Appointements Endpoint.",
      *      @OA\Response(response="200", description="OK"),
+     *      @OA\Response(response="401", description="Unauthorized"),
      *      @OA\Response(response="403", description="Forbidden"),
      *  )
      */
@@ -277,7 +297,7 @@ class AppointementController extends Controller
         return response()->json($this->paginate(
             Controller::formatCollection(
                 $appointements,
-                AppointementController::ALL_APPOINTMENT_INDEX_RESPONSE_FORMAT
+                AppointementController::DOCTOR_APPOINTMENT_INDEX_RESPONSE_FORMAT
             )
         ));
     }
@@ -296,12 +316,12 @@ class AppointementController extends Controller
      *      @OA\Response(response="404", description="Object Not Found"),
      *      @OA\Response(response="200", description="OK"),
      *      @OA\Response(response="403", description="Forbidden"),
+     *      @OA\Response(response="401", description="Unauthorized"),
      *  )
      */
     public function readPatient($id) { 
         $appointement = $this->getAppointementOr404($id);
         $this->authorize("viewAsDoctor" , $appointement);
-    
         return response()->json(
             Controller::formatData(
                 $appointement,
@@ -321,71 +341,55 @@ class AppointementController extends Controller
      *          @OA\JsonContent(
      *              type="object",
      *              required={
-     *                  "clinic_id",
+     *                  "doctor_id",
      *                  "date",
+     *                  "period",
      *              },
-     *              @OA\Property(property="clinic_id",type="integer"),
+     *              @OA\Property(property="doctor_id",type="integer"),
      *              @OA\Property(property="date",type="date"),
+     *              @OA\Property(property="period",type="string"),
      *          ),
      *      ),
      *      @OA\Response(response="200", description="OK"),
      *      @OA\Response(response="403", description="Forbidden"),
      *      @OA\Response(response="422", description="Unprocessable Content"),
+     *      @OA\Response(response="401", description="Unauthorized"),
      *  )
      */
     public function create(AppointementForm $request) {
         $this->authorize("create" , Appointement::class);
+        $current_user = $request->user();
+        if ( $current_user == null ) {
+            return response()->json([
+                "details" => "current user is undefined"
+            ], 401);
+        }
+
+        if ( !$current_user->hasVerifiedEmail() ) {
+            return response()->json([
+                "details" => "your email is not verified"
+            ],401);
+        }
+
         $validated = $request->validated();
-        $clinic = Clinic::where("id" , $validated["clinic_id"])->first();
+
+        $allocated_before_appointement = 
+            Appointement::where("date" , $validated["date"])
+            ->where("period" , $validated["period"])
+            ->where("status" , AppointementStatus::ACCEPTED)
+            ->first();
+
+        if ( $allocated_before_appointement != null ) {
+            return response()->json([
+                "details" => "the requested period is reserved before"
+            ] , 400);
+        }
+
 
         Appointement::create(array_merge($validated , [
             "patient_id" => $request->user()->id,
-            "doctor_id" => $clinic->doctor->user_id
         ]));
         return response()->json(["status" => "created" , "data" => $validated], 200);
-    }
-
-
-    /**
-     *  @OA\Get(
-     *      path="/api/appointements/schedule/clinics/{id}",
-     *      @OA\Parameter(name="id", description="clinic's id" , in="path" , required=true,
-     *          @OA\Schema(
-     *              type="integer"
-     *          )),
-     *      @OA\Parameter(name="period", description="appointement's period" , in="query",
-     *          @OA\Schema(
-     *              type="string"
-     *          )),
-     *      tags={"Patient"},
-     *      operationId = "clinicSchedule",
-     *      summary = "schedule clinic appointements",
-     *      description= "Clinic Schedule Endpoint.",
-     *      @OA\Response(response="200", description="OK"),
-     *      @OA\Response(response="404", description="Object Not Found"),
-     *      @OA\Response(response="403", description="Forbidden"),
-     *  )
-     */
-    public function listClinicSchedule(Request $request, $id) {  // specified for patients (list all appointements for a specific clinic)
-        $this->authorize("viewAnyAsPatient" , Appointement::class);
-        $clinic = Clinic::where("id" , $id)->first();
-        if ($clinic == null) {
-            return response()->json([
-                "details" => "clinic does not exist"
-            ],404);
-        }
-
-        $period = strtolower(htmlentities($request->query("period" , "month")));
-        $start_end_dates = $this->getStartEndDate($period);
-        
-        $appointements = Appointement::where("clinic_id" , $id)->whereBetween("date" , $start_end_dates)->get();
-
-        return response()->json($this->paginate(
-            Controller::formatCollection(
-                $appointements,
-                AppointementController::ALL_APPOINTMENT_INDEX_RESPONSE_FORMAT
-            )
-        ));
     }
 
 
@@ -396,21 +400,31 @@ class AppointementController extends Controller
      *          @OA\Schema(
      *              type="integer"
      *          )),
-     *      @OA\Parameter(name="period", description="appointement's period" , in="query",
-     *          @OA\Schema(
-     *              type="integer"
-     *          )),
      *      tags={"Patient"},
      *      operationId = "doctorSchedule",
-     *      summary = "schedule doctor appointements",
-     *      description= "Doctor Schedule Endpoint.",
+     *      summary = "schedule doctor appointements for the next 7 days",
+     *      description= "Doctor's Schedule Endpoint.",
      *      @OA\Response(response="200", description="OK"),
      *      @OA\Response(response="404", description="Object Not Found"),
      *      @OA\Response(response="403", description="Forbidden"),
+     *      @OA\Response(response="401", description="Unauthorized"),
      *  )
      */
     public function listDoctorSchedule(Request $request, $id) {  // specified for patients (list all appointements for a specific doctor)
-        $this->authorize("viewAsPatient" , Appointement::class);
+        $this->authorize("viewAnyAsPatient" , Appointement::class);
+        $current_user= $request->user();
+
+        if ( $current_user == null ) {
+            return response()->json([
+                "details" => "current user is undefined"
+            ],401);
+        }
+
+        if ( !$current_user->hasVerifiedEmail() ) {
+            return response()->json([
+                "details" => "your email is not verified."
+            ],401);
+        }
 
         $doctor = Doctor::where("user_id" , $id)->first();  
         if ($doctor == null) {
@@ -419,93 +433,141 @@ class AppointementController extends Controller
             ],404);
         }
 
-        $period = strtolower(htmlentities($request->query("period" , "month")));
-        $start_end_dates = $this->getStartEndDate($period);
 
-        $appointements = Appointement::where("doctor_id" , $id)->whereBetween("date" , $start_end_dates)->get();
+        $n_days = 7;
+        $start_time = Carbon::today()->toDateString(); 
+        $end_time = Carbon::today()
+            ->addDays($n_days)
+            ->toDateString();
+
+        $appointements = 
+            Appointement::where("doctor_id" , $id)
+            ->whereBetween("date" , [$start_time , $end_time])->get();
         
-        return response()->json($this->paginate(
-            Controller::formatCollection(
-                $appointements,
-                AppointementController::ALL_APPOINTMENT_INDEX_RESPONSE_FORMAT
-            )
-        ));
+        $response_data = $this->formatAppointementSchedule($appointements , $n_days);
+
+        return response()->json($response_data);
     }
+
 
     /**
      *  @OA\Put(
-     *      path="/api/appointements/me/patients/{id}/submit",
+     *      path="/api/appointements/me/patients/{id}",
+     *      tags={"Doctor"},
+     *      operationId = "updateAppointement",
+     *      summary = "update appointement's status",
+     *      description= "Update Appointement Endpoint.",
+     *      @OA\Parameter(name="id", description="doctor's id" , in="path" , required=true,
+     *          @OA\Schema(
+     *              type="integer"
+     *          )),
+     *      @OA\RequestBody(
+     *          @OA\JsonContent(
+     *              type="object",
+     *              required={
+     *                  "status",
+     *              },
+     *              @OA\Property(property="status",type="integer"),
+     *          ),
+     *      ),
+     *      @OA\Response(response="200", description="OK"),
+     *      @OA\Response(response="403", description="Forbidden"),
+     *      @OA\Response(response="400", description="Bad Request"),
+     *  )
+     */
+    public function update(AppointementForm $request , $id) {
+        $appointement = $this->getAppointementOr404($id);
+        $this->authorize("update" , $appointement);
+
+        if ( $appointement->status != AppointementStatus::NEED_ACK ) {
+            return response()->json([
+                "details" => "current appointement does not need acknowledgement"
+            ],400);
+        }
+
+        $validated =$request->validated();
+
+        $prev_appointement = 
+            Appointement::where("date" , $appointement->date)
+            ->where("period" , $appointement->period)
+            ->where("status" , AppointementStatus::ACCEPTED)->first();
+
+        if ( $prev_appointement != null && $validated["status"] == AppointementStatus::ACCEPTED->value) {
+            return response()->json([
+                "details" => "there's an appointement has been allocated at the same time before"
+            ],400);
+        }
+        
+        $appointement->update([
+            "status" => $validated["status"]
+        ]);
+        return response()->json([
+            "status" => "updated" , 
+            "data" => 
+                Controller::formatData(
+                    $appointement, 
+                    AppointementController::DOCTOR_APPOINTMENT_RESPONSE_FORMAT
+                )
+        ]);
+    }
+
+
+    /**
+     *  @OA\Post(
+     *      path="/api/appointements/me/patients/{id}/tests/",
      *      @OA\Parameter(name="id", description="patient's id" , in="path", required=true,
      *          @OA\Schema(
      *              type="integer"
      *          )),
      *      tags={"Doctor"},
-     *      operationId = "submitSchedule",
-     *      summary = "submit appointement's status",
-     *      description= "Submit Appointement Endpoint.",
+     *      operationId = "submitTest",
+     *      summary = "submit appointement's Test",
+     *      description= "Submit Test Endpoint.",
      *      @OA\RequestBody(
      *          @OA\JsonContent(
      *              type="object",
      *              required={
-     *                  "next_date",
-     *                  "status",
+     *                  "breathing_rate",
+     *                  "body_temperature",
+     *                  "pulse_rate",
+     *                  "medical_notes",
+     *                  "prescription"
      *              },
-     *              @OA\Property(property="next_date",type="date"),
-     *              @OA\Property(property="status",type="integer" ,enum=App\Enums\AppointementStatus::class),
+     *              @OA\Property(property="breathing_rate",type="number"),
+     *              @OA\Property(property="body_temperature",type="number"),
+     *              @OA\Property(property="pulse_rate",type="number"),
+     *              @OA\Property(property="medical_notes",type="number"),
+     *              @OA\Property(property="prescription",type="number"),
      *          ),
      *      ),
      *      @OA\Response(response="200", description="OK"),
      *      @OA\Response(response="403", description="Forbidden"),
      *      @OA\Response(response="422", description="Unprocessable Content"),
      *      @OA\Response(response="404", description="Object Not Found"),
+     *      @OA\Response(response="400", description="Bad Request"),
      *  )
      */
-    public function submit(AppointementForm $request,$id) {
+
+    public function submit(RoutineTestForm $request,$id) { //make a routine test
         $appointement = $this->getAppointementOr404($id);
         $this->authorize("update" , $appointement);
 
         $validated = $request->validated();
 
-        $appointement_info = Arr::except($validated , ["attachement"]);        
-        $appointement->update($appointement_info);
-
-        $response_data = [];
-        $status_code = 0;
-        DB::beginTransaction();
-
-        try {
-            Appointement::create([
-                "patient_id" => $appointement->patient_id,
-                "doctor_id" => $appointement->doctor_id,
-                "clinic_id" => $appointement->clinic_id,
-                "date" => $validated["next_date"]
-            ]);
-    
-            RoutineTest::create(array_merge(
-                $validated["attachement"],[
-                    "doctor_id" => $appointement->doctor_id,
-                    "patient_id" => $appointement->patient_id
-                ]
-            ));
-
-            DB::commit();
-
-            $status_code = 200;
-            $response_data = [
-                "status" => "a new date has been set",
-                "data" => Controller::formatData(
-                    $appointement,
-                    AppointementController::DOCTOR_APPOINTMENT_RESPONSE_FORMAT
-                )
-            ];
-        } catch (Exception $exp) {
-            DB::rollBack();
-            $status_code = 500;
-            $response_data = ["status" => "failed to save the changes"];
+        if ( $appointement->status != AppointementStatus::ACCEPTED) {
+            return response([
+                "details" => "appointement is not accepted"
+            ], 400);
         }
+        
+        $test = RoutineTest::create(array_merge(
+            $validated,[
+                "doctor_id" => $appointement->doctor_id,
+                "patient_id" => $appointement->patient_id
+            ]
+        ));
 
-
-        return response()->json($response_data , $status_code);
+        return response()->json(["status" => "created" , "data" => $test] , 200);
     }
 
 

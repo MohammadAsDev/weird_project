@@ -79,6 +79,21 @@ class UserPolicy
     }
 
     /**
+     * Determine whether the user can view the patient's doctors.
+     *
+     * @param  \App\Models\User  $user
+     * @param  \App\Models\Patient  $patient
+     * @return \Illuminate\Auth\Access\Response|bool
+     */
+    public function viewDoctors(User $user, User $model)
+    {
+        $role = $user->getRoleID();
+        $is_admin_or_staff = $role == Role::ADMIN || $role == Role::STAFF;
+        return $is_admin_or_staff;
+    }
+
+
+    /**
      * Determine whether the user can restore the model.
      *
      * @param  \App\Models\User  $user

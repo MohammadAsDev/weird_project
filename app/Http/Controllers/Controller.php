@@ -8,6 +8,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Routing\Controller as BaseController;
+use Tymon\JWTAuth\Providers\Auth\Illuminate;
 
 /**
 
@@ -32,6 +33,14 @@ class Controller extends BaseController
 
     private const STRUCTURED_KEY = "structured";
 
+    /**
+     * Format model's data depending on a specific format
+     * 
+     * @param Illuminate\Database\Eloquent\Model model
+     * @param format
+     * @param parameter_list
+     * @return response_data
+    */
     public static function formatData(Model $model, $format , $parameter_list=[]) {
         $response_data = [];
         $attr = $model;
@@ -60,7 +69,7 @@ class Controller extends BaseController
                 continue;
 
             }
-            if ($attr->$val != null) {
+            if (!is_null($attr->$val)) {
                 $response_data[$key] = $attr->$val;
             }
         }
@@ -68,6 +77,14 @@ class Controller extends BaseController
         return $response_data;
     }
 
+    /**
+     * Format collection depending on a specific format
+     * 
+     * @param Illuminate\Database\Eloquent\Collection collection
+     * @param format
+     * @return response_data
+     * 
+    */
     public static function formatCollection(Collection $collection, $format) {
         $response_data = [];
         foreach ($collection as $item) {

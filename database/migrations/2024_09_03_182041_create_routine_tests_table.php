@@ -20,7 +20,6 @@ class CreateRoutineTestsTable extends Migration
 
             $table->decimal('breathing_rate');
             $table->decimal('pulse_rate');
-            // $table->decimal('blood_pressure');
             $table->decimal('body_temperature');    // in C
 
             $table->string('medical_notes')->nullable();
@@ -30,7 +29,7 @@ class CreateRoutineTestsTable extends Migration
             $table->index('patient_id');
 
             $table->foreign('doctor_id')->references('user_id')->on('doctors');
-            $table->foreign('patient_id')->references('user_id')->on('patients');
+            $table->foreign('patient_id')->references('id')->on('users');
             
             $table->timestamps();
         });

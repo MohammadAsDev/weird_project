@@ -2,7 +2,12 @@
 
 namespace App\Enums;
 
-
+/**
+ * @OA\Schema(
+ *  type="integer",
+ *  title="Medical Specialization Enum"
+ * )
+ */
 enum MedicalSpecialization : int {
     case ANESTHESIOLOGY     = 0;
     case DERMATOLOGY        = 1;

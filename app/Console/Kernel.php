@@ -2,8 +2,10 @@
 
 namespace App\Console;
 
+use App\Enums\AppointementStatus;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
+use Illuminate\Support\Facades\DB;
 
 class Kernel extends ConsoleKernel
 {
@@ -16,6 +18,11 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         // $schedule->command('inspire')->hourly();
+        $schedule->call(function() {    // set appointements as delayed after (make it better!)
+            DB::table('appointements')
+            ->where("status" , AppointementStatus::NEED_ACK)
+            ->update(["status" => AppointementStatus::DELAYED]);
+        })->daily();
     }
 
     /**

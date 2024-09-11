@@ -2,9 +2,16 @@
 
 namespace App\Enums;
 
+
+/**
+ * @OA\Schema(
+ *  type="integer",
+ *  title="Appointement Status Enum",
+ * )
+ */
 enum AppointementStatus : int {
-    case COMPLETED      = 0;
-    case CANCELED       = 1;
-    case DELAYED        = 2;
-    case WAITED         = 3;
+    case NEED_ACK           = 0;
+    case ACCEPTED           = 1;
+    case REJECTED           = 2;
+    case DELAYED            = 3;
 };

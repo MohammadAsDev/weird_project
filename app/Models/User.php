@@ -3,14 +3,14 @@
 namespace App\Models;
 
 use App\Enums\Role;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\HasApiTokens;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 
-class User extends Authenticatable implements JWTSubject
+class User extends Authenticatable implements JWTSubject, MustVerifyEmail
 {
     use HasApiTokens, HasFactory, Notifiable;
 
@@ -67,6 +67,10 @@ class User extends Authenticatable implements JWTSubject
         return $this->role_id;
      }
 
+     public function verifyToken() {
+        return $this->belongsTo(VerifyToken::class , "id" , "user_id");
+     }
+
     /**
      * Get the identifier that will be stored in the subject claim of the JWT.
      *
@@ -111,5 +115,38 @@ class User extends Authenticatable implements JWTSubject
     public function setEmailAttribute($value)
     {
         $this->attributes['email'] = strtolower($value);
+    }
+
+
+    /**
+     * Determine if the user has verified their email address
+     * 
+     * @return bool
+    */
+    public function hasVerifiedEmail()
+    {
+        return !is_null($this->email_verified_at);     
+    }
+
+    /**
+     * Mark the given user's email as verified
+     * 
+     * @return bool
+    */
+    public function markEmailAsVerified()
+    {
+        return $this->forceFill([
+            "email_verified_at" => $this->freshTimestamp()
+        ])->save();
+    }
+
+
+    public function appointements() {
+        return $this->hasMany(Appointement::class , 'patient_id' , 'id');
+    }
+
+
+    public function tests() {
+        return $this->hasMany(RoutineTest::class , "patient_id" , "id");
     }
 }

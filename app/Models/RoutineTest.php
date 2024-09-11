@@ -13,7 +13,6 @@ class RoutineTest extends Model
         "doctor_id",
         "patient_id",
         "breathing_rate",
-        // "blood_pressure",
         "body_temperature",
         "pulse_rate",
         "medical_notes",
@@ -25,6 +24,6 @@ class RoutineTest extends Model
     }
 
     public function patient() {
-        return $this->belongsTo(Patient::class , "patient_id" , "user_id");
+        return $this->belongsTo(User::class , "patient_id" , "id");
     }
 }

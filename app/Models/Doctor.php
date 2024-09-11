@@ -16,6 +16,7 @@ class Doctor extends Model
         'specialization',
         'rate',
         'short_description',
+        'assigned_at',
     ];
     protected $primaryKey = "user_id";
     public $incrementing = False;
@@ -38,7 +39,7 @@ class Doctor extends Model
     }
 
     public function clinics() {
-        return $this->hasMany(Clinic::class , "doctor_id" , "user_id");
+        return $this->belongsTo(Clinic::class , "user_id" , "doctor_id");
     }
 
     public function appointements() {

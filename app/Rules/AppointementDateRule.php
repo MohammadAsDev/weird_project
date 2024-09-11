@@ -21,11 +21,11 @@ class AppointementDateRule implements Rule
     
     private function checkDateValidation($appointements_list , $date) {
         $date = Carbon::createFromFormat("Y-m-d H:i:s" , $date);
-        $diff_mins = 60;
+        $min_diff_in_minutes = 60;
         foreach ($appointements_list as $appointement) {
             $appointement_date = Carbon::createFromFormat("Y-m-d H:i:s" , $appointement["date"]);
             $diff = $date->diffInMinutes($appointement_date);
-            if ( $diff <= $diff_mins ) {
+            if ( $diff <= $min_diff_in_minutes ) {
                 return false;
             }
         }
@@ -41,6 +41,7 @@ class AppointementDateRule implements Rule
      */
     public function passes($attribute, $value)
     {
+        $date = Carbon::createFromDate($value);
         $appointements = Appointement::where(
             "date",
             ">",

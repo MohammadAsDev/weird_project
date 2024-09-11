@@ -20,6 +20,7 @@ class CreateDoctorsTable extends Migration
             $table->bigInteger("user_id")->unsigned();
             $table->bigInteger('departement_id')->unsigned()->nullable();
 
+            $table->date('assigned_at');
             $table->integer('specialization');
             $table->string('short_description' , 500);
             $table->integer('rate');

@@ -64,9 +64,9 @@
                 "tags": [
                     "Admin"
                 ],
-                "summary": "list patient's appointements",
+                "summary": "list appointements for specific patient",
                 "description": "Patient's Appointements Endpoint.",
-                "operationId": "readPatientAppointements",
+                "operationId": "listPatientAppointements",
                 "parameters": [
                     {
                         "name": "id",
@@ -82,43 +82,11 @@
                     "200": {
                         "description": "OK"
                     },
-                    "403": {
-                        "description": "Forbidden"
-                    },
-                    "422": {
-                        "description": "Unprocessable Content"
-                    }
-                }
-            }
-        },
-        "/api/appointements/clinics/{id}/": {
-            "get": {
-                "tags": [
-                    "Admin"
-                ],
-                "summary": "list clinic's appointments",
-                "description": "Clinic's Appointement Endpoint.",
-                "operationId": "listClinicAppointements",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "clinic's id",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    },
-                    "403": {
-                        "description": "Forbidden"
-                    },
                     "404": {
                         "description": "Object Not Found"
+                    },
+                    "403": {
+                        "description": "Forbidden"
                     }
                 }
             }
@@ -128,8 +96,8 @@
                 "tags": [
                     "Patient"
                 ],
-                "summary": "list current user's  appointements",
-                "description": "Current Appointements Endpoint.",
+                "summary": "list current patient's  appointements",
+                "description": "Current Patient's Appointements Endpoint.",
                 "operationId": "listCurrentAppointements",
                 "responses": {
                     "200": {
@@ -137,6 +105,9 @@
                     },
                     "403": {
                         "description": "Forbidden"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
                     }
                 }
             }
@@ -169,6 +140,9 @@
                     },
                     "403": {
                         "description": "Forbidden"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
                     }
                 }
             }
@@ -178,12 +152,15 @@
                 "tags": [
                     "Doctor"
                 ],
-                "summary": "list patients appointements",
-                "description": "Patients Appointement Endpoint.",
-                "operationId": "listPatientAppointements",
+                "summary": "list patients' appointements for the current doctor",
+                "description": "Patients' Appointements Endpoint.",
+                "operationId": "listPatientsAppointements",
                 "responses": {
                     "200": {
                         "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
                     },
                     "403": {
                         "description": "Forbidden"
@@ -219,6 +196,56 @@
                     },
                     "403": {
                         "description": "Forbidden"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Doctor"
+                ],
+                "summary": "update appointement's status",
+                "description": "Update Appointement Endpoint.",
+                "operationId": "updateAppointement",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "doctor's id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "status"
+                                ],
+                                "properties": {
+                                    "status": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "400": {
+                        "description": "Bad Request"
                     }
                 }
             }
@@ -236,16 +263,20 @@
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "clinic_id",
-                                    "date"
+                                    "doctor_id",
+                                    "date",
+                                    "period"
                                 ],
                                 "properties": {
-                                    "clinic_id": {
+                                    "doctor_id": {
                                         "type": "integer"
                                     },
                                     "date": {
                                         "type": "string",
                                         "format": "date"
+                                    },
+                                    "period": {
+                                        "type": "string"
                                     }
                                 },
                                 "type": "object"
@@ -262,46 +293,9 @@
                     },
                     "422": {
                         "description": "Unprocessable Content"
-                    }
-                }
-            }
-        },
-        "/api/appointements/schedule/clinics/{id}": {
-            "get": {
-                "tags": [
-                    "Patient"
-                ],
-                "summary": "schedule clinic appointements",
-                "description": "Clinic Schedule Endpoint.",
-                "operationId": "clinicSchedule",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "clinic's id",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
                     },
-                    {
-                        "name": "period",
-                        "in": "query",
-                        "description": "appointement's period",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    },
-                    "404": {
-                        "description": "Object Not Found"
-                    },
-                    "403": {
-                        "description": "Forbidden"
+                    "401": {
+                        "description": "Unauthorized"
                     }
                 }
             }
@@ -311,8 +305,8 @@
                 "tags": [
                     "Patient"
                 ],
-                "summary": "schedule doctor appointements",
-                "description": "Doctor Schedule Endpoint.",
+                "summary": "schedule doctor appointements for the next 7 days",
+                "description": "Doctor's Schedule Endpoint.",
                 "operationId": "doctorSchedule",
                 "parameters": [
                     {
@@ -323,14 +317,6 @@
                         "schema": {
                             "type": "integer"
                         }
-                    },
-                    {
-                        "name": "period",
-                        "in": "query",
-                        "description": "appointement's period",
-                        "schema": {
-                            "type": "integer"
-                        }
                     }
                 ],
                 "responses": {
@@ -342,18 +328,21 @@
                     },
                     "403": {
                         "description": "Forbidden"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
                     }
                 }
             }
         },
-        "/api/appointements/me/patients/{id}/submit": {
-            "put": {
+        "/api/appointements/me/patients/{id}/tests/": {
+            "post": {
                 "tags": [
                     "Doctor"
                 ],
-                "summary": "submit appointement's status",
-                "description": "Submit Appointement Endpoint.",
-                "operationId": "submitSchedule",
+                "summary": "submit appointement's Test",
+                "description": "Submit Test Endpoint.",
+                "operationId": "submitTest",
                 "parameters": [
                     {
                         "name": "id",
@@ -370,22 +359,27 @@
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "next_date",
-                                    "status"
+                                    "breathing_rate",
+                                    "body_temperature",
+                                    "pulse_rate",
+                                    "medical_notes",
+                                    "prescription"
                                 ],
                                 "properties": {
-                                    "next_date": {
-                                        "type": "string",
-                                        "format": "date"
+                                    "breathing_rate": {
+                                        "type": "number"
                                     },
-                                    "status": {
-                                        "type": "integer",
-                                        "enum": [
-                                            0,
-                                            1,
-                                            2,
-                                            3
-                                        ]
+                                    "body_temperature": {
+                                        "type": "number"
+                                    },
+                                    "pulse_rate": {
+                                        "type": "number"
+                                    },
+                                    "medical_notes": {
+                                        "type": "number"
+                                    },
+                                    "prescription": {
+                                        "type": "number"
                                     }
                                 },
                                 "type": "object"
@@ -501,206 +495,44 @@
                 }
             }
         },
-        "/api/clinics/internal": {
-            "get": {
-                "tags": [
-                    "Admin",
-                    "Patient"
-                ],
-                "summary": "list all internal clinics",
-                "description": "List Internal Clinics Endpoint.",
-                "operationId": "listInternalClinics",
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    },
-                    "403": {
-                        "description": "Forbidden"
-                    }
-                }
-            },
-            "post": {
-                "tags": [
-                    "Admin"
-                ],
-                "summary": "create internal clinic",
-                "description": "Create Internal Clinic Endpoint.",
-                "operationId": "createInteranlClinics",
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "doctor_id",
-                                    "clinic_code",
-                                    "departement_id"
-                                ],
-                                "properties": {
-                                    "doctor_id": {
-                                        "type": "integer"
-                                    },
-                                    "clinic_code": {
-                                        "type": "string"
-                                    },
-                                    "departement_id": {
-                                        "type": "integer"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    },
-                    "422": {
-                        "description": "Unprocessable Content"
-                    },
-                    "403": {
-                        "description": "Forbidden"
-                    }
-                }
-            }
-        },
-        "/api/clinics/internal/{id}": {
-            "get": {
-                "tags": [
-                    "Admin",
-                    "Patient"
-                ],
-                "summary": "read internal clinic",
-                "description": "Read Internal Clinic Endpoint.",
-                "operationId": "readInternalClinics",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "clinic's id",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    },
-                    "403": {
-                        "description": "Forbidden"
-                    },
-                    "404": {
-                        "description": "Object Not Found"
-                    }
-                }
-            }
-        },
-        "/api/clinics/external": {
-            "get": {
-                "tags": [
-                    "Admin",
-                    "Patient"
-                ],
-                "summary": "list external clinics",
-                "description": "List External Clinics Endpoint.",
-                "operationId": "listExternalClinics",
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    },
-                    "403": {
-                        "description": "Forbidden"
-                    }
-                }
-            },
-            "post": {
-                "tags": [
-                    "Admin"
-                ],
-                "summary": "create external clinic",
-                "description": "Create External Clinic Endpoint.",
-                "operationId": "createExternalClinics",
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "doctor_id",
-                                    "clinic_longitude",
-                                    "clinic_latitude"
-                                ],
-                                "properties": {
-                                    "doctor_id": {
-                                        "type": "integer"
-                                    },
-                                    "clinic_longitude": {
-                                        "type": "number"
-                                    },
-                                    "clinic_latitude": {
-                                        "type": "number"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    },
-                    "403": {
-                        "description": "Forbidden"
-                    },
-                    "422": {
-                        "description": "Unprocessable Content"
-                    }
-                }
-            }
-        },
-        "/api/clinics/external/{id}": {
-            "get": {
-                "tags": [
-                    "Admin",
-                    "Patient"
-                ],
-                "summary": "read external clinic",
-                "description": "Read External Clinic Endpoint.",
-                "operationId": "readExternalClinics",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "clinic's id",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    },
-                    "403": {
-                        "description": "Forbidden"
-                    },
-                    "404": {
-                        "description": "Object Not Found"
-                    }
-                }
-            }
-        },
         "/api/clinics/{id}": {
+            "get": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "read a clinic",
+                "description": "Read Clinic Endpoint.",
+                "operationId": "readClinic",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "clinic's id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Object Not Found"
+                    }
+                }
+            },
             "put": {
                 "tags": [
                     "Admin"
                 ],
                 "summary": "update clinic",
                 "description": "Update Clinic Endpoint.",
-                "operationId": "updateClinics",
+                "operationId": "updateClinic",
                 "parameters": [
                     {
                         "name": "id",
@@ -716,28 +548,12 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "required": [
-                                    "doctor_id",
-                                    "clinic_code",
-                                    "departement_id",
-                                    "clinic_longitude",
-                                    "clinic_latitude"
-                                ],
                                 "properties": {
-                                    "doctor_id": {
-                                        "type": "integer"
-                                    },
                                     "clinic_code": {
                                         "type": "string"
                                     },
                                     "departement_id": {
                                         "type": "integer"
-                                    },
-                                    "clinic_longitude": {
-                                        "type": "number"
-                                    },
-                                    "clinic_latitude": {
-                                        "type": "number"
                                     }
                                 },
                                 "type": "object"
@@ -787,6 +603,48 @@
                     },
                     "404": {
                         "description": "Object Not Found"
+                    }
+                }
+            }
+        },
+        "/api/clinics/": {
+            "post": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "create clinic",
+                "description": "Create Clinic Endpoint.",
+                "operationId": "createClinic",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "clinic_code",
+                                    "departement_id"
+                                ],
+                                "properties": {
+                                    "clinic_code": {
+                                        "type": "string"
+                                    },
+                                    "departement_id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "422": {
+                        "description": "Unprocessable Content"
+                    },
+                    "403": {
+                        "description": "Forbidden"
                     }
                 }
             }
@@ -890,7 +748,6 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "required": [],
                                 "properties": {
                                     "departement_name": {
                                         "type": "string"
@@ -977,7 +834,7 @@
                     "Admin"
                 ],
                 "summary": "list departement's doctors",
-                "description": "List Departement's Doctors Endpoint.",
+                "description": "List Doctors Working in Specific Departement Endpoint.",
                 "operationId": "listDepartementDoctors",
                 "parameters": [
                     {
@@ -1035,7 +892,8 @@
                                     "birth_date",
                                     "specialization",
                                     "short_description",
-                                    "rate"
+                                    "rate",
+                                    "assigned_at"
                                 ],
                                 "properties": {
                                     "first_name": {
@@ -1057,37 +915,24 @@
                                         "type": "string"
                                     },
                                     "gender": {
-                                        "type": "integer",
-                                        "enum": [
-                                            0,
-                                            1
-                                        ]
+                                        "$ref": "#/components/schemas/Gender"
                                     },
                                     "birth_date": {
                                         "type": "string",
                                         "format": "date"
                                     },
                                     "specialization": {
-                                        "type": "integer",
-                                        "enum": [
-                                            0,
-                                            1,
-                                            2,
-                                            3,
-                                            4,
-                                            5
-                                        ]
+                                        "$ref": "#/components/schemas/MedicalSpecialization"
                                     },
                                     "short_description": {
                                         "type": "string"
                                     },
                                     "rate": {
-                                        "type": "integer",
-                                        "enum": [
-                                            0,
-                                            1,
-                                            2
-                                        ]
+                                        "$ref": "#/components/schemas/Rate"
+                                    },
+                                    "assigned_at": {
+                                        "type": "string",
+                                        "format": "date"
                                     }
                                 },
                                 "type": "object"
@@ -1104,6 +949,9 @@
                     },
                     "404": {
                         "description": "Object Not Found"
+                    },
+                    "422": {
+                        "description": "Unprocessable Content"
                     }
                 }
             }
@@ -1114,7 +962,7 @@
                     "Admin"
                 ],
                 "summary": "list departement's nurses",
-                "description": "List Departement's Nurses Endpoint.",
+                "description": "List Nurses Working in Specific Departement Endpoint.",
                 "operationId": "listDepartementNurses",
                 "parameters": [
                     {
@@ -1171,7 +1019,7 @@
                                     "specialization",
                                     "short_description",
                                     "rate",
-                                    "doctor_id"
+                                    "assinged_at"
                                 ],
                                 "properties": {
                                     "first_name": {
@@ -1205,10 +1053,11 @@
                                     "short_description": {
                                         "type": "string"
                                     },
-                                    "rate": {
-                                        "type": "integer"
+                                    "assigned_at": {
+                                        "type": "string",
+                                        "format": "date"
                                     },
-                                    "doctor_id": {
+                                    "rate": {
                                         "type": "integer"
                                     }
                                 },
@@ -1226,6 +1075,9 @@
                     },
                     "404": {
                         "description": "Object Not Found"
+                    },
+                    "422": {
+                        "description": "Unprocessable Content"
                     }
                 }
             }
@@ -1236,7 +1088,7 @@
                     "Admin"
                 ],
                 "summary": "list departement's clinics",
-                "description": "List Departement's Clinics Endpoint.",
+                "description": "List Clinics in Specific Departement Endpoint.",
                 "operationId": "listDepartementClinics",
                 "parameters": [
                     {
@@ -1284,13 +1136,9 @@
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "doctor_id",
                                     "clinic_code"
                                 ],
                                 "properties": {
-                                    "doctor_id": {
-                                        "type": "integer"
-                                    },
                                     "clinic_code": {
                                         "type": "string"
                                     }
@@ -1309,6 +1157,9 @@
                     },
                     "404": {
                         "description": "Object Not Found"
+                    },
+                    "422": {
+                        "description": "Unprocessable Content"
                     }
                 }
             }
@@ -1318,7 +1169,7 @@
                 "tags": [
                     "Admin"
                 ],
-                "summary": "add new doctors to the system",
+                "summary": "add a new doctor to the system",
                 "description": "Create Doctor Endpoint.",
                 "operationId": "createDoctor",
                 "requestBody": {
@@ -1337,6 +1188,7 @@
                                     "departement_id",
                                     "specialization",
                                     "short_description",
+                                    "assigned_at",
                                     "rate"
                                 ],
                                 "properties": {
@@ -1359,11 +1211,7 @@
                                         "type": "string"
                                     },
                                     "gender": {
-                                        "type": "integer",
-                                        "enum": [
-                                            0,
-                                            1
-                                        ]
+                                        "$ref": "#/components/schemas/Gender"
                                     },
                                     "birth_date": {
                                         "type": "string",
@@ -1373,26 +1221,17 @@
                                         "type": "integer"
                                     },
                                     "specialization": {
-                                        "type": "integer",
-                                        "enum": [
-                                            0,
-                                            1,
-                                            2,
-                                            3,
-                                            4,
-                                            5
-                                        ]
+                                        "$ref": "#/components/schemas/MedicalSpecialization"
                                     },
                                     "short_description": {
                                         "type": "string"
                                     },
+                                    "assigned_at": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
                                     "rate": {
-                                        "type": "integer",
-                                        "enum": [
-                                            0,
-                                            1,
-                                            2
-                                        ]
+                                        "$ref": "#/components/schemas/Rate"
                                     }
                                 },
                                 "type": "object"
@@ -1486,11 +1325,7 @@
                                         "type": "string"
                                     },
                                     "gender": {
-                                        "type": "integer",
-                                        "enum": [
-                                            0,
-                                            1
-                                        ]
+                                        "$ref": "#/components/schemas/Gender"
                                     },
                                     "birth_date": {
                                         "type": "string",
@@ -1500,26 +1335,17 @@
                                         "type": "integer"
                                     },
                                     "specialization": {
-                                        "type": "integer",
-                                        "enum": [
-                                            0,
-                                            1,
-                                            2,
-                                            3,
-                                            4,
-                                            5
-                                        ]
+                                        "$ref": "#/components/schemas/MedicalSpecialization"
                                     },
                                     "short_description": {
                                         "type": "string"
                                     },
+                                    "assigned_at": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
                                     "rate": {
-                                        "type": "integer",
-                                        "enum": [
-                                            0,
-                                            1,
-                                            2
-                                        ]
+                                        "$ref": "#/components/schemas/Rate"
                                     }
                                 },
                                 "type": "object"
@@ -1591,22 +1417,23 @@
                 }
             }
         },
-        "/api/doctors/{id}/nurses": {
+        "/api/doctors/search/": {
             "get": {
                 "tags": [
+                    "Patient",
                     "Admin"
                 ],
-                "summary": "list doctor's nurses",
-                "description": "List Specific Doctor's Nurses Endpoint.",
-                "operationId": "listDoctorNurses",
+                "summary": "Seach on doctors using their full names",
+                "description": "Seach on Doctors Endpoint.",
+                "operationId": "DoctorSearch",
                 "parameters": [
                     {
-                        "name": "id",
-                        "in": "path",
-                        "description": "doctor's id",
-                        "required": true,
+                        "name": "name",
+                        "in": "query",
+                        "description": "doctor's full name",
+                        "required": false,
                         "schema": {
-                            "type": "integer"
+                            "type": "string"
                         }
                     }
                 ],
@@ -1614,43 +1441,11 @@
                     "200": {
                         "description": "OK"
                     },
-                    "404": {
-                        "description": "Object Not Found"
-                    },
                     "403": {
                         "description": "Forbidden"
-                    }
-                }
-            }
-        },
-        "/api/doctors/{id}/clinics": {
-            "get": {
-                "tags": [
-                    "Admin"
-                ],
-                "summary": "list doctor's clinics",
-                "description": "List Specific Doctor's Clinics Endpoint.",
-                "operationId": "listDoctorClinics",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "doctor's id",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK"
                     },
-                    "404": {
-                        "description": "Object Not Found"
-                    },
-                    "403": {
-                        "description": "Forbidden"
+                    "401": {
+                        "description": "Unauthorized"
                     }
                 }
             }
@@ -1669,6 +1464,9 @@
                     },
                     "403": {
                         "description": "Forbidden"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
                     }
                 }
             },
@@ -1703,11 +1501,7 @@
                                         "type": "string"
                                     },
                                     "gender": {
-                                        "type": "integer",
-                                        "enum": [
-                                            0,
-                                            1
-                                        ]
+                                        "$ref": "#/components/schemas/Gender"
                                     },
                                     "birth_date": {
                                         "type": "string",
@@ -1728,42 +1522,31 @@
                     },
                     "422": {
                         "description": "Unprocessable Content"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
                     }
                 }
             }
         },
-        "/api/doctors/me/nurses": {
+        "/api/statistics/best_doctors": {
             "get": {
                 "tags": [
-                    "Doctor"
+                    "Patient",
+                    "Admin"
                 ],
-                "summary": "list current doctor's nurse info",
-                "description": "List Nurses Working With The Current Doctor.",
-                "operationId": "listMyNurses",
+                "summary": "list the best four doctors",
+                "description": "Best Doctors Report Endpoint.",
+                "operationId": "bestDoctors",
                 "responses": {
                     "200": {
                         "description": "OK"
                     },
                     "403": {
                         "description": "Forbidden"
-                    }
-                }
-            }
-        },
-        "/api/doctors/me/clinics": {
-            "get": {
-                "tags": [
-                    "Doctor"
-                ],
-                "summary": "list current doctor's clinic info",
-                "description": "List Clinics For The Current Doctor Endpoint.",
-                "operationId": "listMyClinics",
-                "responses": {
-                    "200": {
-                        "description": "OK"
                     },
-                    "403": {
-                        "description": "Forbidden"
+                    "401": {
+                        "description": "Unauthorized"
                     }
                 }
             }
@@ -1773,7 +1556,7 @@
                 "tags": [
                     "Admin"
                 ],
-                "summary": "read a nurse info",
+                "summary": "read specific nurse info",
                 "description": "Read Nurse Endpoint.",
                 "operationId": "readNurse",
                 "parameters": [
@@ -1841,11 +1624,7 @@
                                         "type": "string"
                                     },
                                     "gender": {
-                                        "type": "integer",
-                                        "enum": [
-                                            0,
-                                            1
-                                        ]
+                                        "$ref": "#/components/schemas/Gender"
                                     },
                                     "birth_date": {
                                         "type": "string",
@@ -1855,29 +1634,20 @@
                                         "type": "integer"
                                     },
                                     "specialization": {
-                                        "type": "integer",
-                                        "enum": [
-                                            0,
-                                            1,
-                                            2,
-                                            3,
-                                            4,
-                                            5
-                                        ]
+                                        "$ref": "#/components/schemas/MedicalSpecialization"
                                     },
                                     "short_description": {
                                         "type": "string"
                                     },
                                     "rate": {
-                                        "type": "integer",
-                                        "enum": [
-                                            0,
-                                            1,
-                                            2
-                                        ]
+                                        "$ref": "#/components/schemas/Rate"
                                     },
                                     "doctor_id": {
                                         "type": "integer"
+                                    },
+                                    "assigned_at": {
+                                        "type": "string",
+                                        "format": "date"
                                     }
                                 },
                                 "type": "object"
@@ -1947,33 +1717,88 @@
                         "description": "Forbidden"
                     }
                 }
-            }
-        },
-        "/api/nurses/{id}/doctor/": {
-            "get": {
+            },
+            "post": {
                 "tags": [
                     "Admin"
                 ],
-                "summary": "get responsible doctor",
-                "description": "Get Responsible Doctor Endpoint.",
-                "operationId": "nurseDoctor",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "nurse's id",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
+                "operationId": "30f9eb106e755fd305297262461404e2",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "first_name",
+                                    "last_name",
+                                    "email",
+                                    "password",
+                                    "phone_number",
+                                    "address",
+                                    "gender",
+                                    "birth_date",
+                                    "specialization",
+                                    "short_description",
+                                    "rate",
+                                    "assinged_at",
+                                    "departement_id"
+                                ],
+                                "properties": {
+                                    "first_name": {
+                                        "type": "string"
+                                    },
+                                    "last_name": {
+                                        "type": "string"
+                                    },
+                                    "email": {
+                                        "type": "string"
+                                    },
+                                    "password": {
+                                        "type": "string"
+                                    },
+                                    "phone_number": {
+                                        "type": "string"
+                                    },
+                                    "address": {
+                                        "type": "string"
+                                    },
+                                    "gender": {
+                                        "type": "integer"
+                                    },
+                                    "birth_date": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "specialization": {
+                                        "type": "integer"
+                                    },
+                                    "short_description": {
+                                        "type": "string"
+                                    },
+                                    "assigned_at": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "rate": {
+                                        "type": "integer"
+                                    },
+                                    "departement_id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
                         }
                     }
-                ],
+                },
                 "responses": {
                     "200": {
                         "description": "OK"
                     },
                     "403": {
                         "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Object Not Found"
                     }
                 }
             }
@@ -1992,6 +1817,9 @@
                     },
                     "403": {
                         "description": "Forbidden"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
                     }
                 }
             }
@@ -2028,11 +1856,7 @@
                                         "type": "string"
                                     },
                                     "gender": {
-                                        "type": "integer",
-                                        "enum": [
-                                            0,
-                                            1
-                                        ]
+                                        "$ref": "#/components/schemas/Gender"
                                     },
                                     "birth_date": {
                                         "type": "string",
@@ -2053,24 +1877,9 @@
                     },
                     "422": {
                         "description": "Unprocessable Content"
-                    }
-                }
-            }
-        },
-        "/api/nurses/me/doctor/": {
-            "get": {
-                "tags": [
-                    "Nurse"
-                ],
-                "summary": "read responsible doctor for the current nurse",
-                "description": "Current Nurse's Responsible Doctor Endpoint.",
-                "operationId": "currentNurseDoctor",
-                "responses": {
-                    "200": {
-                        "description": "OK"
                     },
-                    "403": {
-                        "description": "Forbidden"
+                    "401": {
+                        "description": "Unauthorized"
                     }
                 }
             }
@@ -2235,11 +2044,7 @@
                                         "type": "string"
                                     },
                                     "gender": {
-                                        "type": "integer",
-                                        "enum": [
-                                            0,
-                                            1
-                                        ]
+                                        "$ref": "#/components/schemas/Gender"
                                     },
                                     "birth_date": {
                                         "type": "string",
@@ -2332,58 +2137,24 @@
                 }
             }
         },
-        "/api/patients/prechecks": {
-            "get": {
-                "tags": [
-                    "Admin"
-                ],
-                "summary": "list all uncompleted prechecks",
-                "description": "List Prechecks Endpoint.",
-                "operationId": "listPrechecks",
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    },
-                    "403": {
-                        "description": "Forbidden"
-                    }
-                }
-            },
+        "/api/patients/confirm": {
             "post": {
                 "tags": [
-                    "Admin"
+                    "Patient"
                 ],
-                "summary": "save a patient's precheck",
-                "description": "Save Patient's Precheck Endpoint.",
-                "operationId": "savePrecheck",
+                "summary": "confirm patient's account",
+                "description": "Confirm Patient Endpoint.",
+                "operationId": "confirmPatient",
                 "requestBody": {
                     "content": {
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "ssn",
-                                    "blood_type",
-                                    "aspirin_allergy"
+                                    "token"
                                 ],
                                 "properties": {
-                                    "ssn": {
+                                    "token": {
                                         "type": "string"
-                                    },
-                                    "blood_type": {
-                                        "type": "integer",
-                                        "enum": [
-                                            0,
-                                            1,
-                                            2,
-                                            3,
-                                            4,
-                                            5,
-                                            6,
-                                            7
-                                        ]
-                                    },
-                                    "aspirin_allergy": {
-                                        "type": "boolean"
                                     }
                                 },
                                 "type": "object"
@@ -2400,6 +2171,9 @@
                     },
                     "422": {
                         "description": "Unprocessable Content"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
                     }
                 }
             }
@@ -2409,7 +2183,7 @@
                 "tags": [
                     "Patient"
                 ],
-                "summary": "read current patient's info",
+                "summary": "current patient's account",
                 "description": "Current Patient Endpoint.",
                 "operationId": "currentPatient",
                 "responses": {
@@ -2418,6 +2192,9 @@
                     },
                     "403": {
                         "description": "Forbidden"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
                     }
                 }
             },
@@ -2452,11 +2229,7 @@
                                         "type": "string"
                                     },
                                     "gender": {
-                                        "type": "integer",
-                                        "enum": [
-                                            0,
-                                            1
-                                        ]
+                                        "$ref": "#/components/schemas/Gender"
                                     },
                                     "birth_date": {
                                         "type": "string",
@@ -2477,6 +2250,9 @@
                     },
                     "422": {
                         "description": "Unprocessable Content"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
                     }
                 }
             }
@@ -2495,6 +2271,9 @@
                     },
                     "403": {
                         "description": "Forbidden"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
                     }
                 }
             }
@@ -2512,7 +2291,7 @@
                         "description": "OK"
                     },
                     "403": {
-                        "description": "Not authorized"
+                        "description": "Forbidden"
                     }
                 }
             }
@@ -2522,7 +2301,7 @@
                 "tags": [
                     "Admin"
                 ],
-                "summary": "read routine test",
+                "summary": "read a routine test",
                 "description": "Read Routine Test Endpoint.",
                 "operationId": "readRoutineTest",
                 "parameters": [
@@ -2541,10 +2320,189 @@
                         "description": "OK"
                     },
                     "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Object Not Found"
+                    }
+                }
+            }
+        },
+        "/api/tests/patients/{id}/": {
+            "get": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "list patient's routine tests",
+                "description": "List Routine Tests for Specific Patient Endpoint.",
+                "operationId": "listPatientTests",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "patient's id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Object Not Found"
+                    }
+                }
+            }
+        },
+        "/api/tests/doctors/{id}/": {
+            "get": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "list all doctor's routine tests",
+                "description": "List Routine Tests Made By Speicifc Doctor Endpoint.",
+                "operationId": "listDoctorTests",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "departement's id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Object Not Found"
+                    }
+                }
+            }
+        },
+        "/api/tests/me/": {
+            "get": {
+                "tags": [
+                    "Patient"
+                ],
+                "summary": "list current patient's routine tests",
+                "description": "List Current Patient's Tests Endpoint.",
+                "operationId": "listCurrentPatientTests",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        },
+        "/api/tests/me/{id}/": {
+            "get": {
+                "tags": [
+                    "Patient"
+                ],
+                "summary": "read current patient's routine test",
+                "description": "Read Current Patient's Test Endpoint.",
+                "operationId": "readCurrentPatientTest",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "test's id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Object Not Found"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        },
+        "/api/tests/me/patients/": {
+            "get": {
+                "tags": [
+                    "Doctor"
+                ],
+                "summary": "list current doctor's routine tests",
+                "description": "List Routine Tests Made By Current Doctor Endpoint.",
+                "operationId": "listCurrentDoctorTests",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "403": {
                         "description": "Not authorized"
                     },
                     "404": {
                         "description": "Object Not Found"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        },
+        "/api/tests/me/patients/{id}/": {
+            "get": {
+                "tags": [
+                    "Doctor"
+                ],
+                "summary": "read routine test made by current doctor",
+                "description": "Read Current Doctor Test Endpoint.",
+                "operationId": "readCurrentDoctorTest",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "test's id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Object Not Found"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
                     }
                 }
             },
@@ -2574,9 +2532,6 @@
                                     "breathing_rate": {
                                         "type": "number"
                                     },
-                                    "blood_pressure": {
-                                        "type": "number"
-                                    },
                                     "body_temperature": {
                                         "type": "number"
                                     },
@@ -2604,179 +2559,122 @@
                     },
                     "404": {
                         "description": "Object Not Found"
+                    },
+                    "422": {
+                        "description": "Unprocessable Content"
                     }
                 }
             }
         },
-        "/api/tests/patients/{id}/": {
-            "get": {
+        "/api/verify_tokens/search/": {
+            "post": {
                 "tags": [
                     "Admin"
                 ],
-                "summary": "list patient's routine tests",
-                "description": "List Patient's Routine Tests Endpoint.",
-                "operationId": "listPatientTests",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "patient's id",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
+                "summary": "search on patient's verify token",
+                "description": "Search on Verify Tokens Endpoint.",
+                "operationId": "searchVerifyTokens",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "ssn"
+                                ],
+                                "properties": {
+                                    "ssn": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
                         }
                     }
-                ],
+                },
                 "responses": {
                     "200": {
                         "description": "OK"
                     },
                     "403": {
-                        "description": "Not authorized"
+                        "description": "Forbidden"
                     },
-                    "404": {
-                        "description": "Object Not Found"
-                    }
-                }
-            }
-        },
-        "/api/tests/doctors/{id}/": {
-            "get": {
-                "tags": [
-                    "Admin"
-                ],
-                "summary": "list all doctor's routine tests",
-                "description": "List Doctor's Routine Tests Endpoint.",
-                "operationId": "listDoctorTests",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "departement's id",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    },
-                    "403": {
-                        "description": "Not authorized"
-                    },
-                    "404": {
-                        "description": "Object Not Found"
-                    }
-                }
-            }
-        },
-        "/api/tests/me/": {
-            "get": {
-                "tags": [
-                    "Patient"
-                ],
-                "summary": "list current patient's routine tests",
-                "description": "List Current Patient's Tests Endpoint.",
-                "operationId": "listCurrentPatientTests",
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    },
-                    "403": {
-                        "description": "Not authorized"
-                    }
-                }
-            }
-        },
-        "/api/tests/me/{id}/": {
-            "get": {
-                "tags": [
-                    "Patient"
-                ],
-                "summary": "read current patient's routine test",
-                "description": "Read Current Patient's Test Endpoint.",
-                "operationId": "readCurrentPatientTest",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "test's id",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    },
-                    "403": {
-                        "description": "Not authorized"
-                    },
-                    "404": {
-                        "description": "Object Not Found"
-                    }
-                }
-            }
-        },
-        "/api/tests/me/patients/": {
-            "get": {
-                "tags": [
-                    "Doctor"
-                ],
-                "summary": "list routine tests made by the current doctor",
-                "description": "List Current Doctor Tests Endpoint.",
-                "operationId": "listCurrentDoctorTests",
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    },
-                    "403": {
-                        "description": "Not authorized"
-                    },
-                    "404": {
-                        "description": "Object Not Found"
-                    }
-                }
-            }
-        },
-        "/api/tests/me/patients/{id}/": {
-            "get": {
-                "tags": [
-                    "Doctor"
-                ],
-                "summary": "read routine test made by current doctor's ",
-                "description": "Read Current Doctor Test Endpoint.",
-                "operationId": "readCurrentDoctorTests",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "test's id",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    },
-                    "403": {
-                        "description": "Not authorized"
-                    },
-                    "404": {
-                        "description": "Object Not Found"
+                    "422": {
+                        "description": "Unprocessable Content"
                     }
                 }
             }
         }
     },
     "components": {
+        "schemas": {
+            "AppointementStatus": {
+                "title": "Appointement Status Enum",
+                "type": "integer",
+                "enum": [
+                    0,
+                    1,
+                    2,
+                    3
+                ]
+            },
+            "BloodType": {
+                "title": "Blood Type Enum",
+                "type": "integer",
+                "enum": [
+                    0,
+                    1,
+                    2,
+                    3,
+                    4,
+                    5,
+                    6,
+                    7
+                ]
+            },
+            "Gender": {
+                "title": "Gender Enum",
+                "type": "integer",
+                "enum": [
+                    0,
+                    1
+                ]
+            },
+            "MedicalSpecialization": {
+                "title": "Medical Specialization Enum",
+                "type": "integer",
+                "enum": [
+                    0,
+                    1,
+                    2,
+                    3,
+                    4,
+                    5
+                ]
+            },
+            "Rate": {
+                "title": "Rate Enum",
+                "type": "integer",
+                "enum": [
+                    0,
+                    1,
+                    2,
+                    3,
+                    4
+                ]
+            },
+            "Role": {
+                "title": "Role Enum",
+                "type": "integer",
+                "enum": [
+                    0,
+                    1,
+                    2,
+                    3,
+                    4,
+                    5
+                ]
+            }
+        },
         "securitySchemes": {
             "bearerAuth": {
                 "type": "http",

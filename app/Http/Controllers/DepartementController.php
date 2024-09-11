@@ -2,13 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\ClinicType;
 use App\Enums\Role;
 use App\Http\Controllers\Doctors\DoctorController;
 use App\Http\Controllers\Nurses\NurseController;
+use App\Http\Requests\ClinicForm;
 use App\Http\Requests\DepartementForm;
 use App\Http\Requests\DoctorForm;
-use App\Http\Requests\InternalClinicForm;
 use App\Http\Requests\NurseForm;
 use App\Models\Clinic;
 use App\Models\Departement;
@@ -19,7 +18,6 @@ use Exception;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 
 class DepartementController extends Controller
@@ -32,33 +30,6 @@ class DepartementController extends Controller
         "structured" => true
     ];
 
-    private function getUserData($request_data) {
-        $user_data = Arr::except(
-            $request_data , 
-            [
-                "departement_id" , 
-                'rate' ,
-                'specialization' , 
-                "short_description"
-            ]
-        );
-        return $user_data;
-    }
-
-    private function getDoctordData($request_data) {
-        return [
-            "rate" => $request_data['rate'],
-            'specialization' => $request_data['specialization'],
-            'short_description' => $request_data['short_description']
-        ];
-    }
-
-    private function getNuresData($request_data) {
-        return [
-            "rate" => $request_data['rate'],
-            'short_description' => $request_data['short_description']
-        ];
-    }
 
     private function getDepartementOr404($departementId) {
         $departement = Departement::where('id' , $departementId)->first();
@@ -140,7 +111,6 @@ class DepartementController extends Controller
      *      @OA\RequestBody(
      *          @OA\JsonContent(
      *              type="object",
-     *              required={},
      *              @OA\Property(property="departement_name",type="string"),
      *              @OA\Property(property="specialization",type="integer"),
      *              @OA\Property(property="description",type="string"),
@@ -231,7 +201,8 @@ class DepartementController extends Controller
      *                  "birth_date",
      *                  "specialization",
      *                  "short_description",
-     *                  "rate"
+     *                  "rate",
+     *                  "assigned_at",
      *              },
      *              @OA\Property(property="first_name",type="string"),
      *              @OA\Property(property="last_name",type="string"),
@@ -239,11 +210,12 @@ class DepartementController extends Controller
      *              @OA\Property(property="password",type="string"),
      *              @OA\Property(property="phone_number",type="string"),
      *              @OA\Property(property="address",type="string"),
-     *              @OA\Property(property="gender",type="integer" , enum=App\Enums\Gender::class),
+     *              @OA\Property(property="gender",type="integer" , ref="#/components/schemas/Gender"),
      *              @OA\Property(property="birth_date",type="date"),
-     *              @OA\Property(property="specialization",type="integer",enum=App\Enums\MedicalSpecialization::class),
+     *              @OA\Property(property="specialization",type="integer",ref="#/components/schemas/MedicalSpecialization"),
      *              @OA\Property(property="short_description",type="string"),
-     *              @OA\Property(property="rate",type="integer",enum=App\Enums\Rate::class)
+     *              @OA\Property(property="rate",type="integer",ref="#/components/schemas/Rate"),
+     *              @OA\Property(property="assigned_at",type="date"),
      *          ),
      *     ),
      *     @OA\Parameter(name="id", description="departement's id" , in="path" , required=true,
@@ -253,6 +225,7 @@ class DepartementController extends Controller
      *     @OA\Response(response="200", description="OK"),
      *     @OA\Response(response="403", description="Forbidden"),
      *     @OA\Response(response="404", description="Object Not Found"),
+     *     @OA\Response(response="422", description="Unprocessable Content"),
      *  )
      */
     protected function createDoctor(DoctorForm $request , $id) {
@@ -266,13 +239,15 @@ class DepartementController extends Controller
         DB::beginTransaction();
         try {
             $doctor_user = User::create(array_merge(
-                $this->getUserData($validated) , 
+                $validated , 
                 ["role_id" => Role::DOCTOR]
             ));
             Doctor::create(array_merge(
-                $this->getDoctordData($validated) , 
+                $validated , 
                 ["departement_id" => $id , "user_id" => $doctor_user->id]
             ));
+            $doctor_user->markEmailAsVerified();
+
             DB::commit();
             
             $status_code = 200;
@@ -292,7 +267,7 @@ class DepartementController extends Controller
      *     tags={"Admin"},
      *     operationId = "listDepartementDoctors",
      *     summary = "list departement's doctors",
-     *     description= "List Departement's Doctors Endpoint.",
+     *     description= "List Doctors Working in Specific Departement Endpoint.",
      *     @OA\Parameter(name="id", description="departement's id" , in="path" , required=true,
      *          @OA\Schema(
      *              type="integer"
@@ -315,6 +290,7 @@ class DepartementController extends Controller
         ));
     }
 
+
     /**
      *  @OA\Post(
      *     path="/api/departements/{id}/nurses/",
@@ -334,7 +310,7 @@ class DepartementController extends Controller
      *                  "specialization",
      *                  "short_description",
      *                  "rate",
-     *                  "doctor_id"
+     *                  "assinged_at"
      *              },
      *              @OA\Property(property="first_name",type="string"),
      *              @OA\Property(property="last_name",type="string"),
@@ -346,8 +322,8 @@ class DepartementController extends Controller
      *              @OA\Property(property="birth_date",type="date"),
      *              @OA\Property(property="specialization",type="integer"),
      *              @OA\Property(property="short_description",type="string"),
+     *              @OA\Property(property="assigned_at",type="date"),
      *              @OA\Property(property="rate",type="integer"),
-     *              @OA\Property(property="doctor_id",type="integer"),
      *          ),
      *     ),
      *     @OA\Parameter(name="id", description="departement's id" , in="path" , required=true,
@@ -357,6 +333,7 @@ class DepartementController extends Controller
      *     @OA\Response(response="200", description="OK"),
      *     @OA\Response(response="403", description="Forbidden"),
      *     @OA\Response(response="404", description="Object Not Found"),
+     *     @OA\Response(response="422", description="Unprocessable Content"),
      *  )
      */
     protected function createNurse(NurseForm $request , $id) {
@@ -369,15 +346,14 @@ class DepartementController extends Controller
 
         DB::beginTransaction();
         try {
-            $user = User::create(array_merge($this->getUserData($validated) , ["role_id" => Role::NURSE]));
+            $user = User::create(array_merge($validated , ["role_id" => Role::NURSE]));
             Nurse::create(array_merge(
-            $this->getNuresData($validated), 
-            [
-                "specialization" => $validated["specialization"],
-                "departement_id" => $id , 
-                "doctor_id" => $validated["doctor_id"] , 
-                "user_id" => $user->id
+            $validated, [
+                "user_id" => $user->id,
+                "departement_id" => $id
             ]));
+            $user->markEmailAsVerified();
+
             DB::commit();
 
             $status_code = 200;
@@ -385,12 +361,12 @@ class DepartementController extends Controller
 
         } catch ( Exception $expception) {
             DB::rollBack();
-
             $status_code = 500;
             $response_data = ["status" => "uncreated"];
         }
         return response()->json($response_data , $status_code);
     }
+
 
     /**
      * @OA\Get(
@@ -398,7 +374,7 @@ class DepartementController extends Controller
      *     tags={"Admin"},
      *     operationId = "listDepartementNurses",
      *     summary = "list departement's nurses",
-     *     description= "List Departement's Nurses Endpoint.",
+     *     description= "List Nurses Working in Specific Departement Endpoint.",
      *     @OA\Parameter(name="id", description="departement's id" , in="path" , required=true,
      *          @OA\Schema(
      *              type="integer"
@@ -421,6 +397,7 @@ class DepartementController extends Controller
         ));
     }
 
+
     /**
      *  @OA\Post(
      *      path="/api/departements/{id}/clinics/",
@@ -432,10 +409,8 @@ class DepartementController extends Controller
      *          @OA\JsonContent(
      *              type="object",
      *              required={
-     *                  "doctor_id",
      *                  "clinic_code",
      *              },
-     *              @OA\Property(property="doctor_id",type="integer"),
      *              @OA\Property(property="clinic_code",type="string"),
      *          ),
      *      ),
@@ -446,16 +421,16 @@ class DepartementController extends Controller
      *      @OA\Response(response="200", description="OK"),
      *      @OA\Response(response="403", description="Forbidden"),
      *      @OA\Response(response="404", description="Object Not Found"),
+     *      @OA\Response(response="422", description="Unprocessable Content"),
      *  )
      */
-    protected function createClinic(InternalClinicForm $request , $id) {
+    protected function createClinic(ClinicForm $request , $id) {
         $this->authorize("createClinic" , Departement::class);
 
         $validated = $request->validated();
         Clinic::create(array_merge(
             $validated, [
                 "departement_id" => $id,
-                "clinic_type" => ClinicType::INTERNAL
             ]
         ));
 
@@ -472,7 +447,7 @@ class DepartementController extends Controller
      *      tags={"Admin"},
      *      operationId = "listDepartementClinics",
      *      summary = "list departement's clinics",
-     *      description= "List Departement's Clinics Endpoint.",
+     *      description= "List Clinics in Specific Departement Endpoint.",
      *      @OA\Parameter(name="id", description="departement's id" , in="path" , required=true,
      *          @OA\Schema(
      *              type="integer"
@@ -483,14 +458,13 @@ class DepartementController extends Controller
      *  )
      */
     protected function listClinics($id) {
-        $this->getDepartementOr404($id);
+        $departement = $this->getDepartementOr404($id);
         $this->authorize("viewAny" , Nurse::class);
 
-        $clinics = Clinic::where("departement_id" , $id)->get();
         return response()->json($this->paginate(
             Controller::formatCollection(
-                $clinics,
-                ClinicController::PATIENT_INTERNAL_INDEX_RESPONSE_FORMAT
+                $departement->clinics,
+                ClinicController::PATIENT_CLINIC_INDEX_RESPONSE_FOMAT
             )
         ));
     }
