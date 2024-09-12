@@ -72,7 +72,12 @@ php artisan key:generate
 php artisan migrate
 ```
 
-9. Start the server:
+9. Run Scheduler (For Crono Jobs):
+```bash
+php artisan schedule:work
+```
+
+10. Start the server:
 ```bash
 php artisan serve
 ```

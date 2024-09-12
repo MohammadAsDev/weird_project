@@ -22,7 +22,7 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule->command('appointements:delayed')->everyMinute();
+        $schedule->command('appointements:delayed')->daily();
     }
 
     /**
