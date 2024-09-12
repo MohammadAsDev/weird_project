@@ -9,6 +9,11 @@ use Illuminate\Support\Facades\DB;
 
 class Kernel extends ConsoleKernel
 {
+
+    protected $commands = [
+        \App\Console\Commands\UpdateDelayedAppointements::class,
+    ];
+
     /**
      * Define the application's command schedule.
      *
@@ -17,12 +22,7 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')->hourly();
-        $schedule->call(function() {    // set appointements as delayed after (make it better!)
-            DB::table('appointements')
-            ->where("status" , AppointementStatus::NEED_ACK)
-            ->update(["status" => AppointementStatus::DELAYED]);
-        })->daily();
+        $schedule->command('appointements:delayed')->everyMinute();
     }
 
     /**
