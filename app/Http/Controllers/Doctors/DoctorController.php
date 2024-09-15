@@ -42,6 +42,24 @@ class DoctorController extends Controller
         "structured" => true
     ];
 
+    public const PATIENT_INDEX_RESPONSE_FORMAT = [
+        "user" => [
+            "id" => "id",
+            "first_name" => "first_name",
+            "last_name" => "last_name",
+            "email" => "email",
+            "phone_number" => "phone_number",
+            "gender" => "gender",
+            "birth_date" => "birth_date",
+            "profile_picture_path" => "profile_picture_path",
+            "structured" => false
+        ],
+        "specialization" => "specialization",
+        "short_description" => "short_description",
+        "rate" => "rate",
+        "structured" => true
+    ];
+
     public const ADMIN_READ_RESPONSE_FORMAT = [     // Admin's View on Doctor's Data
         "user" => [
             "id" => "id",
@@ -218,7 +236,7 @@ class DoctorController extends Controller
     /**
      *  @OA\Get(
      *      path="/api/doctors/{id}",
-     *      tags={"Admin"},
+     *      tags={"Admin" , "Anonymous"},
      *      operationId = "readDoctor",
      *      summary = "read a doctor info",
      *      description= "Read a Specific Doctor Info Endpoint.",
@@ -235,13 +253,17 @@ class DoctorController extends Controller
      *      @OA\Response(response="404", description="Object Not Found")
      *  )
      */
-    protected function read($id) {
+    protected function read(Request $request, $id) {
         $doctor = DoctorController::getDoctorOr404($id);
-        $this->authorize('view' , $doctor);
+        $current_user = $request->user();
+        $response_format = 
+            $current_user == null ? 
+            DoctorController::PATIENT_READ_RESPONSE_FORMAT : 
+            DoctorController::ADMIN_READ_RESPONSE_FORMAT ;
         return response()->json(
             Controller::formatData(
                 $doctor ,
-                DoctorController::ADMIN_READ_RESPONSE_FORMAT
+                $response_format
             ),200);
     }
 
@@ -355,7 +377,7 @@ class DoctorController extends Controller
     /**
      *  @OA\Get(
      *      path="/api/doctors/",
-     *      tags={"Admin"},
+     *      tags={"Admin" , "Anonymous"},
      *      operationId = "List Doctors",
      *      summary = "list all doctors",
      *      description= "List All Doctors Endpoint.",
@@ -363,13 +385,17 @@ class DoctorController extends Controller
      *      @OA\Response(response="403", description="Forbidden")
      *  )
      */
-    protected function index(){
-        $this->authorize("viewAny" , Doctor::class);
+    protected function index(Request $request){
         $doctors = Doctor::all();
+        $current_user = $request->user();
+        $response_format = 
+            $current_user ?
+            DoctorController::ADMIN_INDEX_RESPONSE_FORMAT :
+            DoctorController::PATIENT_INDEX_RESPONSE_FORMAT;
         return response()->json($this->paginate(
             Controller::formatCollection(
                 $doctors,
-                DoctorController::ADMIN_INDEX_RESPONSE_FORMAT
+                $response_format
             )
         ));
     }
@@ -378,7 +404,7 @@ class DoctorController extends Controller
     /**
      *  @OA\Get(
      *      path="/api/doctors/search/",
-     *      tags={"Patient" , "Admin"},
+     *      tags={"Anonymous"},
      *      operationId = "DoctorSearch",
      *      summary = "Seach on doctors using their full names",
      *      description= "Seach on Doctors Endpoint.",
@@ -392,14 +418,6 @@ class DoctorController extends Controller
      *  )
      */
     public function search(Request $request) {
-        $this->authorize("search" , Doctor::class);
-
-        $current_user = $request->user();
-        if ( !$current_user->hasVerifiedEmail() ) {
-            return response([
-                "details" => "your email is not verified."
-            ],401);
-        }
 
         $query = htmlentities($request->query("name"));
         $suggested_doctors = 
@@ -412,7 +430,7 @@ class DoctorController extends Controller
         return response()->json($this->paginate(
             Controller::formatCollection(
                 $suggested_doctors,
-                PatientController::DOCTOR_READ_RESPONSE_FORMAT
+                DoctorController::PATIENT_READ_RESPONSE_FORMAT
             )
         ), 200);
     }
@@ -510,7 +528,7 @@ class DoctorController extends Controller
     /**
      *  @OA\Get(
      *      path="/api/statistics/best_doctors",
-     *      tags={"Patient" , "Admin"},
+     *      tags={"Anonymous"},
      *      operationId = "bestDoctors",
      *      summary = "list the best four doctors",
      *      description= "Best Doctors Report Endpoint.",
@@ -520,18 +538,7 @@ class DoctorController extends Controller
      *  )
      */
     public function bestDoctors(Request $request) {
-        $this->authorize('viewStats' , Doctor::class);
-        $current_user = $request->user();
-        if ( $current_user == null ) {
-            return response()->json([
-                "details" => "current user is undefined"
-            ],401);
-        }
-        if ( !$current_user->hasVerifiedEmail() ) {
-            return response()->json([
-                "details" => "your email is not verified."
-            ],401);
-        }
+        
         $best_doctors = Doctor::orderBy('rate' , 'DESC')->take(4)->get();
         return response()->json([
             "details" => "best doctors in the hospital",
