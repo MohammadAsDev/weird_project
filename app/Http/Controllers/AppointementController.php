@@ -277,13 +277,19 @@ class AppointementController extends Controller
     public function me(Request $request) {
         $this->authorize("viewAnyAsPatient" , Appointement::class);
         $current_user = $request->user();
-
+        if ( $current_user == null ) {
+            return response()->json([
+                "details" => "patient does not exist"
+            ],404);
+        }
         $user_id = $current_user->id;
         $appointements = Appointement::where("patient_id" , $user_id)->get();
 
-        return response()->json(Controller::formatCollection(
-            $appointements , 
-            AppointementController::PATIENT_APPOINTMENT_INDEX_RESPONSE_FORMAT
+        return response()->json(Controller::paginate(
+            Controller::formatCollection(
+                $appointements , 
+                AppointementController::PATIENT_APPOINTMENT_INDEX_RESPONSE_FORMAT
+            )
         ));
     }
 
@@ -409,7 +415,7 @@ class AppointementController extends Controller
 
         if ( $allocated_before_appointement != null ) {
             return response()->json([
-                "details" => "the requested period is reserved before"
+                "details" => "الموعد محجوز مسبقاً"
             ] , 400);
         }
 
@@ -496,7 +502,7 @@ class AppointementController extends Controller
 
         if ( $appointement->status != AppointementStatus::NEED_ACK ) {
             return response()->json([
-                "details" => "current appointement does not need acknowledgement"
+                "details" => "الموعد الحالي لا يحتاج موافقة"
             ],400);
         }
 
@@ -509,7 +515,7 @@ class AppointementController extends Controller
 
         if ( $prev_appointement != null && $validated["status"] == AppointementStatus::ACCEPTED->value) {
             return response()->json([
-                "details" => "there's an appointement has been allocated at the same time before"
+                "details" => "هذه الفترة محجوزة مسبقاً"
             ],400);
         }
         

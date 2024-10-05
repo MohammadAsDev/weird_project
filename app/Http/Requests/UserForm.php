@@ -23,6 +23,7 @@ class UserForm extends FormRequest
     public function messages()
     {
         return [
+            
             "first_name.min" => "يجب أنْ يكون الإسم الأول أكثر من حرفين",
             "first_name.max" => "يجب أنْ يكون الإسم الأول أقل من 255 حرف",
             "first_name.regex" => "يجب أنْ يكون الإسم الأول باللغة العربيّة",
@@ -31,6 +32,10 @@ class UserForm extends FormRequest
             "last_name.max" => "يجب أنْ يكون الإسم الأخير أقل من 255 حرف",
             "last_name.regex" => "يجب أنْ يكون الإسم الأخير باللغة العربيّة",
 
+            "email.unique" => "يجب على البريد الإلكتروني أنْ يكون فريد",
+            "email.email" => "صيغة البريد الإلكتروني غير صحيحة",
+            "phone_number.unique" => "يجب على رقم الهاتف أنْ يكون فريد",
+
             "password.min" => "يجب أنْ يكون كلمة السّر أكثر من حرفين",
             "password.max" => "يجب أنْ يكون كلمة السّر أقل من 255 حرف",
 
@@ -38,7 +43,7 @@ class UserForm extends FormRequest
             "address.max" => "يجب أنْ يكون العنوان أقل من 255 حرف",
 
             "profile_picture.max" => "اسم الصورة قد تجاوز ال 500 محرف",
-            "profile_picture.mime" => "يجب أنْ تكون صيغة الصّور png , jpeg أو jpg"
+            "profile_picture.mime" => "يجب أنْ تكون صيغة الصّور png , jpeg أو jpg",
         ];
     }
 

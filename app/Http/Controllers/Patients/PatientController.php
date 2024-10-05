@@ -301,6 +301,7 @@ class PatientController extends Controller
             DB::commit();
             $status_code = 204;
         } catch (Exception $exp) {
+            error_log($exp);
             DB::rollBack();
             $status_code = 500;
         }
@@ -399,7 +400,7 @@ class PatientController extends Controller
         $verification_token = $current_user->verifyToken;
         if ( $verification_token->is_verified ) {
             return response()->json([
-                "details" => "current user is already verified"
+                "details" => "المستخدم لا يحتاج لتوثيق"
             ] , 400);
         } 
 
@@ -408,8 +409,8 @@ class PatientController extends Controller
 
         if (strcasecmp($current_user_token , $validated["token"]) != 0) {
             return response()->json([
-                "details" => "invalid verification token"
-            ],422);
+                "details" => "الكود المستخدَّم غير صحيح"
+            ],400);
         }
 
         $status_code = 0;

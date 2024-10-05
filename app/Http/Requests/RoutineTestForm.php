@@ -28,9 +28,20 @@ class RoutineTestForm extends FormRequest
         return [
             "breathing_rate.min" => "يجب أنْ يكون معدل التنفس بين 0 و 100",
             "breathing_rate.max" => "يجب أنْ يكون معدل التنفس بين 0 و 100",
+            "breathing_rate.numeric" => "يجب أنْ يكون معدل التنفس قيمة رقميّة",
+            "breathing_rate.required" => "يجب أنْ يكون معدل التنفس غير فارغ",
 
-            "pulse_rate.min" => "يجب أنْ يكون معدل التنفس بين 0 و 100",
-            "pulse_rate.max" => "يجب أنْ يكون معدل التنفس بين 0 و 100"
+            "pulse_rate.min" => "يجب أنْ يكون معدل ضربات القلب بين 0 و 100",
+            "pulse_rate.max" => "يجب أنْ يكون معدل ضربات القلب بين 0 و 100",
+            "pulse_rate.numeric" => "يجب أنْ يكون معدل ضربات القلب قيمة رقميّة",
+            "pulse_rate.required" => "يجب أنْ يكون معدل ضربات القلب غير فارغ",
+
+
+            "body_temperature.min" => "يجب أنْ تكون درجة الحرارة بين 0 و 100",
+            "body_temperature.max" => "يجب أنْ تكون درجة الحرارة بين 0 و 100",
+            "body_temperature.numeric" => "يجب أنْ تكون درجة حرارة الجسم قيمة رقميّة",
+            "body_temperature.required" => "يجب أنْ تكون درجة حرارة الجسم غير فارغة",
+
         ];
     }
 

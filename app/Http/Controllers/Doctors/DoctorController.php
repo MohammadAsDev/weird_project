@@ -519,7 +519,6 @@ class DoctorController extends Controller
         $query = htmlentities($request->query("name"));
         $suggested_doctors = 
             Doctor::join("users" , "users.id" , "doctors.user_id")
-            ->where("deleted_at" , null)
             ->where(
                 DB::raw(
                     "concat(first_name , ' ' , last_name)"
