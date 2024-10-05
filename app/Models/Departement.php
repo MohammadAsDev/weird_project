@@ -16,7 +16,7 @@ class Departement extends Model
     ];
 
     protected $casts = [
-        "specialization" => MedicalSpecialization::class
+        "specialization" => MedicalSpecialization::class,
     ];
 
     public function clinics() {

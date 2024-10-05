@@ -56,6 +56,6 @@ class PeriodRule implements Rule
      */
     public function message()
     {
-        return 'The period format should be "start-end" during the working time';
+        return 'صياغة الفترة غير صحيحة ("بدء-إنتهاء" خلال وقت العمل)';
     }
 }

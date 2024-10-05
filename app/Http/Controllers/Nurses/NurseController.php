@@ -10,18 +10,25 @@ use App\Http\Requests\UserForm;
 use App\Models\Nurse;
 use App\Models\User;
 use Exception;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
-use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\DB;
+
+define("NURSES_HOST" , Controller::APP_URL ."api/nurses/");
+
 
 class NurseController extends Controller
 {
 
-    public const ADMIN_INDEX_RESPONSE_FORMAT = [
+    public const NURSE_RESOURCES = NURSES_HOST;
+
+    public const ADMIN_INDEX_RESPONSE_FORMAT = [        // Admin's view on nurses index
         "user" => [
+            "url" => [
+                "meta" => true,
+                "attr" => "id",
+                "prefix" => NurseController::NURSE_RESOURCES
+            ],
             "id" => "id",
             "first_name" => "first_name",
             "last_name" => "last_name",
@@ -30,9 +37,17 @@ class NurseController extends Controller
             "gender" => "gender",
             "address" => "address",
             "birth_date" => "birth_date",
-            "profile_picture_path" => "profile_picture_path",
+            "profile_picture_path" => [
+                "meta" => true,
+                "attr" => "profile_picture",
+                "prefix" => Controller::STORAGE_URL
+            ],       
         ],
-        "departement_id" => "departement_id",
+        "departement" => [
+            "meta" => true,
+            "prefix" => DepartementController::DEPARTEMENTS_RESOURCES,
+            "attr" => "departement_id"
+        ],
         "specialization" => "specialization",
         "short_description" => "short_description",
         "assigned_at" => "assigned_at",
@@ -40,8 +55,13 @@ class NurseController extends Controller
         "structured" => true
     ];
 
-    public const ADMIN_READ_RESPONSE_FORMAT = [
+    public const ADMIN_READ_RESPONSE_FORMAT = [         // Admin's view on nurse's data
         "user" => [
+            "url" => [
+                "meta" => true,
+                "attr" => "id",
+                "prefix" => NurseController::NURSE_RESOURCES
+            ], 
             "id" => "id",
             "first_name" => "first_name",
             "last_name" => "last_name",
@@ -50,28 +70,11 @@ class NurseController extends Controller
             "gender" => "gender",
             "address" => "address",
             "birth_date" => "birth_date",
-            "profile_picture_path" => "profile_picture_path"
-        ],
-        "departement" => "departement",
-        "specialization" => "specialization",
-        "short_description" => "short_description",
-        "rate" => "rate",
-        "assigned_at" => "assigned_at",
-        "structured" => true
-    ];
-
-
-    public const NURSE_READ_RESPONSE_FORMAT = [
-        "user" => [
-            "id" => "id",
-            "first_name" => "first_name",
-            "last_name" => "last_name",
-            "email" => "email",
-            "phone_number" => "phone_number",
-            "gender" => "gender",
-            "address" => "address",
-            "birth_date" => "birth_date",
-            "profile_picture_path" => "profile_picture_path"
+            "profile_picture_path" => [
+                "meta" => true,
+                "attr" => "profile_picture",
+                "prefix" => Controller::STORAGE_URL
+            ],
         ],
         "departement" => DepartementController::ALL_DEPARTEMENT_RESPONSE_FORMAT,
         "specialization" => "specialization",
@@ -81,19 +84,59 @@ class NurseController extends Controller
         "structured" => true
     ];
 
-    public const PATIENT_READ_RESPONSE_FORMAT = [
+
+    public const NURSE_READ_RESPONSE_FORMAT = [         // Nurse's view on nurse's data
         "user" => [
+            "url" => [
+                "meta" => true,
+                "attr" => "id",
+                "prefix" => NurseController::NURSE_RESOURCES
+            ],
             "first_name" => "first_name",
             "last_name" => "last_name",
             "email" => "email",
             "phone_number" => "phone_number",
             "gender" => "gender",
-            "profile_picture_path" => "profile_picture_path",
+            "address" => "address",
+            "birth_date" => "birth_date",
+            "profile_picture_path" => [
+                "meta" => true,
+                "attr" => "profile_picture",
+                "prefix" => Controller::STORAGE_URL
+            ],
+        ],
+        "departement" => DepartementController::ALL_DEPARTEMENT_RESPONSE_FORMAT,
+        "specialization" => "specialization",
+        "short_description" => "short_description",
+        "rate" => "rate",
+        "assigned_at" => "assigned_at",
+        "structured" => true
+    ];
+
+    public const PATIENT_READ_RESPONSE_FORMAT = [           // Patient's view on nurse's data
+        "user" => [
+            "url" => [
+                "meta" => true,
+                "attr" => "id",
+                "prefix" => NurseController::NURSE_RESOURCES
+            ],
+            "first_name" => "first_name",
+            "last_name" => "last_name",
+            "email" => "email",
+            "phone_number" => "phone_number",
+            "gender" => "gender",
+            "profile_picture_path" => [
+                "meta" => true,
+                "attr" => "profile_picture",
+                "prefix" => Controller::STORAGE_URL
+            ],
         ],
         "specialization" => "specialization",
         "rate" => "rate",
         "structured" => true
     ];
+
+
 
     public static function getNurseOr404($nurseId) {
         $nurse = Nurse::where('user_id' , $nurseId)->first();
@@ -185,9 +228,16 @@ class NurseController extends Controller
 
         $status_code = 0;
         $response_data = [];
+        $image = $request->file('profile_picture');
 
         DB::beginTransaction();
         try {
+
+            if ($image) {
+                $image_path = $image->store("uploads/images" , "public");
+                $validated["profile_picture"] = $image_path;
+            }
+
             $user = User::create(array_merge($validated , ["role_id" => Role::NURSE]));
             Nurse::create(
                 array_merge($validated, [
@@ -195,6 +245,7 @@ class NurseController extends Controller
             ]));
             $user->markEmailAsVerified();
             
+
             DB::commit();
 
             $status_code = 200;
@@ -250,14 +301,24 @@ class NurseController extends Controller
         $this->authorize('update' , $nurse);
 
         $validated = $request->validated();
+        $image = $request->file('profile_picture');
+
         $response_data = [];
         $status_code = 0;
 
         DB::beginTransaction();
         try {
+
+            if ($image) {
+                $image_path = $image->store("uploads/images" , "public");
+                $validated["profile_picture"] = $image_path;
+            }
+
             $nurse->user->update($validated);
             $nurse->update($validated);
             DB::commit();
+
+            $request->image->storeAs('images' , $validated["profile_image"]);
 
             $response_data = Controller::formatData(
                 $nurse , 
@@ -293,15 +354,16 @@ class NurseController extends Controller
         $nurse = NurseController::getNurseOr404($id);
         $this->authorize('delete' , $nurse);
 
-        $user = $nurse->user;
 
         $status_code = 0;
         $response_data = [];
         
         DB::beginTransaction();
         try {
+            $user = $nurse->user;
             $nurse->delete();
             $user->delete();
+            
             DB::commit();
 
             $status_code = 204;
@@ -329,7 +391,7 @@ class NurseController extends Controller
         $this->authorize("viewAny" , Nurse::class);
         $nurses = Nurse::all(); 
         return response()->json(
-            $this->paginate(
+            Controller::paginate(
                 Controller::formatCollection(
                     $nurses,
                     NurseController::ADMIN_INDEX_RESPONSE_FORMAT
@@ -404,7 +466,7 @@ class NurseController extends Controller
      *       @OA\Response(response="401", description="Unauthorized")
      *  )
      */
-    public function updateMe(UserForm $request) {
+    public function updateMe(UserForm $request) {   // TODO saving image
         $current_user = $request->user();
         if ( $current_user == null ) {
             return response()->json([
@@ -422,7 +484,17 @@ class NurseController extends Controller
         }
         
         $validated = $request->validated();
-        $current_user->update($validated);
+        $image = $request->file('profile_picture');
+
+        try {
+            if ($image) {
+                $image_path = $image->store("uploads/images" , "public");
+                $validated["profile_picture"] = $image_path;
+            }
+            $current_user->update($validated);
+        } catch(Exception $exp) {
+            return response()->json(["status" => "failed" , "details" => $exp] , 500);
+        }
         return response()->json(
             ["status" => "updated" , "data" => $validated]
         );
@@ -430,16 +502,6 @@ class NurseController extends Controller
 
 
     
-    public function paginate($items, $perPage = 5, $page = null, $options = [])
-    {
-
-        $page = $page ?: (Paginator::resolveCurrentPage() ?: 1);
-
-        $items = $items instanceof Collection ? $items : Collection::make($items);
-
-        return new LengthAwarePaginator($items->forPage($page, $perPage), $items->count(), $perPage, $page, $options);
-
-    }
 
 }
 

@@ -36,6 +36,6 @@ class DoctorSpecRule implements Rule
      */
     public function message()
     {
-        return 'Medical specialization is not specified';
+        return 'الإختصاص الطبي غير معرّف';
     }
 }

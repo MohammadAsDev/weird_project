@@ -13,40 +13,86 @@ use App\Models\RoutineTest;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
-use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Pagination\Paginator;
+
+define("APPOINTEMENT_HOSTS" , Controller::APP_URL . "api/appointements/");
 
 class AppointementController extends Controller
 {
 
-    const ALL_APPOINTMENT_INDEX_RESPONSE_FORMAT = [
-        "id" => "id",
-        "date" => "date",
+    public const APPOINTEMENT_RESOURCE = APPOINTEMENT_HOSTS;
+
+    const ADMIN_APPOINTMENT_INDEX_RESPONSE_FORMAT = [         // General view on appointements index
+        "appointment_id" => "id",
+        "url" => [
+            "attr" => "id",
+            "meta" => true,
+            "prefix" => AppointementController::APPOINTEMENT_RESOURCE
+        ],
+        "appointment_date" => "date",
         "period" => "period",
         "status" => "status",
-        "pateint_id" => "patient_id",
-        "doctor_id" => "doctor_id",
+        "pateint" => [
+            "meta" => true,
+            "attr" => "patient_id",
+            "prefix" => PatientController::PATIENT_RESOURCES
+        ],
+        "doctor" => [
+            "meta" => true,
+            "attr" => "doctor_id",
+            "prefix" => DoctorController::DOCTOR_RESOURCES
+        ],
     ];
 
-    const PATIENT_APPOINTMENT_INDEX_RESPONSE_FORMAT = [
-        "id" => "id",
-        "date" => "date",
+
+    const PATIENT_APPOINTMENT_INDEX_RESPONSE_FORMAT = [     // Patient view on appointements index
+        "appointment_id" => "id",
+        "url" => [
+            "attr" => "id",
+            "meta" => true,
+            "prefix" => AppointementController::APPOINTEMENT_RESOURCE
+        ],
+        "appointment_date" => "date",
         "period" => "period",
         "status" => "status",
-        "doctor_id" => "doctor_id",
+        "doctor" => [
+            "user" => [
+                "first_name" => "first_name",
+                "last_name" => "last_name",
+            ],
+            "departement" => [
+                "departement_name" => "name",
+                "structured" => false
+            ],
+            "structured" => false
+        ],    
     ];
 
-    const DOCTOR_APPOINTMENT_INDEX_RESPONSE_FORMAT = [
-        "id" => "id",
-        "date" => "date",
+    const DOCTOR_APPOINTMENT_INDEX_RESPONSE_FORMAT = [      // Doctor view on appointements index
+        "appointment_url" => [
+            "attr" => "id",
+            "meta" => true,
+            "prefix" => AppointementController::APPOINTEMENT_RESOURCE
+        ],
+        "appointment_id" => "id",
+        "appointment_date" => "date",
         "period" => "period",
         "status" => "status",
-        "pateint_id" => "patient_id",
+        // "pateint" => [
+        //     "meta" => true,
+        //     "attr" => "patient_id",
+        //     "prefix" => PatientController::PATIENT_RESOURCES
+        // ],
+        "patient" => PatientController::DOCTOR_READ_RESPONSE_FORMAT
     ];
 
-    const ADMIN_APPOINTMENT_RESPONSE_FORMAT = [
-        "id" => "id",
-        "date" => "date",
+    const ADMIN_APPOINTMENT_RESPONSE_FORMAT = [                 // Admin view on appointement's data
+        "appointment_id" => "id",
+        "url" => [
+            "attr" => "id",
+            "meta" => true,
+            "prefix" => AppointementController::APPOINTEMENT_RESOURCE
+        ],
+        "appointment_date" => "date",
         "period" => "period",
         "doctor" => DoctorController::ADMIN_READ_RESPONSE_FORMAT,
         "patient" => PatientController::DOCTOR_READ_RESPONSE_FORMAT,
@@ -54,16 +100,26 @@ class AppointementController extends Controller
     ];
 
     const PATIENT_APPOINTMENT_RESPONSE_FORMAT = [       // Patient's View on Appointement
-        "id" => "id",
-        "date" => "date",
+        "appointment_id" => "id",
+        "url" => [
+            "attr" => "id",
+            "meta" => true,
+            "prefix" => AppointementController::APPOINTEMENT_RESOURCE
+        ],
+        "appointment_date" => "date",
         "period" => "period",
         "doctor" => DoctorController::PATIENT_READ_RESPONSE_FORMAT,
         "status" => "status"
     ];
 
     const DOCTOR_APPOINTMENT_RESPONSE_FORMAT = [        // Doctor's View on Appointement
-        "id" => "id",
-        "date" => "date",
+        "appointment_id" => "id",
+        "url" => [
+            "attr" => "id",
+            "meta" => true,
+            "prefix" => AppointementController::APPOINTEMENT_RESOURCE
+        ],
+        "appointment_date" => "date",
         "period" => "period",
         "patient" => PatientController::DOCTOR_READ_RESPONSE_FORMAT,
         "status" => "status"
@@ -104,11 +160,9 @@ class AppointementController extends Controller
             }
         }
 
-
         foreach ($appointements as $appointement) {
-            $appointement_date = $appointement->date->toDateString();
             if ($appointement->status == AppointementStatus::ACCEPTED) {
-                $appointements_table[$appointement_date][$appointement->period] = true;                
+                $appointements_table[$appointement->date][$appointement->period] = true;                
             }
         }
 
@@ -139,10 +193,10 @@ class AppointementController extends Controller
     public function index() {
         $this->authorize("viewAny" , Appointement::class);
         $appointements = Appointement::all();
-        return response()->json($this->paginate(
+        return response()->json(Controller::paginate(
             Controller::formatCollection(
                 $appointements, 
-                AppointementController::ALL_APPOINTMENT_INDEX_RESPONSE_FORMAT
+                AppointementController::ADMIN_APPOINTMENT_INDEX_RESPONSE_FORMAT
             )
         ));
     }
@@ -169,10 +223,10 @@ class AppointementController extends Controller
         $doctor = DoctorController::getDoctorOr404($id);
         $appointements = $doctor->appointements;
         return response()->json(
-            $this->paginate(
+            Controller::paginate(
                 Controller::formatCollection(
                     $appointements,
-                    AppointementController::ALL_APPOINTMENT_INDEX_RESPONSE_FORMAT
+                    AppointementController::ADMIN_APPOINTMENT_INDEX_RESPONSE_FORMAT
                 )
             )
         );
@@ -198,10 +252,10 @@ class AppointementController extends Controller
         $this->authorize("viewAny" , Appointement::class);
         $patient = PatientController::getPatientOr404($id);
         $appointements = $patient->appointements;
-        return response()->json($this->paginate(
+        return response()->json(Controller::paginate(
             Controller::formatCollection(
                 $appointements,
-                AppointementController::ALL_APPOINTMENT_INDEX_RESPONSE_FORMAT
+                AppointementController::ADMIN_APPOINTMENT_INDEX_RESPONSE_FORMAT
             )
         ));
     }
@@ -224,20 +278,12 @@ class AppointementController extends Controller
         $this->authorize("viewAnyAsPatient" , Appointement::class);
         $current_user = $request->user();
 
-        if ( !$current_user->hasVerifiedEmail() ) {
-            return response([
-                "details" => "your email is not verified."
-            ],401);
-        }
-
         $user_id = $current_user->id;
         $appointements = Appointement::where("patient_id" , $user_id)->get();
 
-        return response()->json($this->paginate(
-            Controller::formatCollection(
-                $appointements,
-                AppointementController::PATIENT_APPOINTMENT_INDEX_RESPONSE_FORMAT
-            )
+        return response()->json(Controller::formatCollection(
+            $appointements , 
+            AppointementController::PATIENT_APPOINTMENT_INDEX_RESPONSE_FORMAT
         ));
     }
 
@@ -258,13 +304,7 @@ class AppointementController extends Controller
      *      @OA\Response(response="401", description="Unauthorized"),
      *  )
      */
-    public function readAppointement(Request $request, $id) {
-        $current_user = $request->user();
-        if ( !$current_user->hasVerifiedEmail() ) {
-            return response()->json([
-                "details" => "your email is not verified."
-            ],401);
-        }
+    public function readAppointement($id) {
         $appointement = $this->getAppointementOr404($id);
         $this->authorize("viewAsPatient" , $appointement);
         
@@ -279,7 +319,7 @@ class AppointementController extends Controller
 
     /**
      *  @OA\Get(
-     *      path="/api/appointements/patients",
+     *      path="/api/appointements/me/patients",
      *      tags={"Doctor"},
      *      operationId = "listPatientsAppointements",
      *      summary = "list patients' appointements for the current doctor",
@@ -294,7 +334,7 @@ class AppointementController extends Controller
         $doctor_id = $request->user()->id;
         $appointements = Appointement::where("doctor_id" , $doctor_id)->get();
 
-        return response()->json($this->paginate(
+        return response()->json(Controller::paginate(
             Controller::formatCollection(
                 $appointements,
                 AppointementController::DOCTOR_APPOINTMENT_INDEX_RESPONSE_FORMAT
@@ -358,18 +398,6 @@ class AppointementController extends Controller
      */
     public function create(AppointementForm $request) {
         $this->authorize("create" , Appointement::class);
-        $current_user = $request->user();
-        if ( $current_user == null ) {
-            return response()->json([
-                "details" => "current user is undefined"
-            ], 401);
-        }
-
-        if ( !$current_user->hasVerifiedEmail() ) {
-            return response()->json([
-                "details" => "your email is not verified"
-            ],401);
-        }
 
         $validated = $request->validated();
 
@@ -410,21 +438,8 @@ class AppointementController extends Controller
      *      @OA\Response(response="401", description="Unauthorized"),
      *  )
      */
-    public function listDoctorSchedule(Request $request, $id) {  // specified for patients (list all appointements for a specific doctor)
+    public function listDoctorSchedule($id) {  // specified for patients (list all appointements for a specific doctor)
         $this->authorize("viewAnyAsPatient" , Appointement::class);
-        $current_user= $request->user();
-
-        if ( $current_user == null ) {
-            return response()->json([
-                "details" => "current user is undefined"
-            ],401);
-        }
-
-        if ( !$current_user->hasVerifiedEmail() ) {
-            return response()->json([
-                "details" => "your email is not verified."
-            ],401);
-        }
 
         $doctor = Doctor::where("user_id" , $id)->first();  
         if ($doctor == null) {
@@ -435,7 +450,7 @@ class AppointementController extends Controller
 
 
         $n_days = 7;
-        $start_time = Carbon::today()->toDateString(); 
+        $start_time = Carbon::today()->addDay()->toDateString(); 
         $end_time = Carbon::today()
             ->addDays($n_days)
             ->toDateString();
@@ -568,13 +583,5 @@ class AppointementController extends Controller
         ));
 
         return response()->json(["status" => "created" , "data" => $test] , 200);
-    }
-
-
-    public function paginate($items, $perPage = 5, $page = null, $options = [])
-    {
-        $page = $page ?: (Paginator::resolveCurrentPage() ?: 1);
-        $items = $items instanceof Collection ? $items : Collection::make($items);
-        return new LengthAwarePaginator($items->forPage($page, $perPage), $items->count(), $perPage, $page, $options);
     }
 }

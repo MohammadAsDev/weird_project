@@ -15,15 +15,20 @@ use App\Models\Doctor;
 use App\Models\Nurse;
 use App\Models\User;
 use Exception;
-use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\DB;
+
+define("DEPARTEMENT_HOST", Controller::APP_URL . "api/departements/");
 
 class DepartementController extends Controller
 {
+    public const DEPARTEMENTS_RESOURCES = DEPARTEMENT_HOST;
 
     public const ALL_DEPARTEMENT_RESPONSE_FORMAT = [
+        "url" => [
+            "attr" => "id",
+            "prefix" => DEPARTEMENT_HOST,
+            "meta" => true
+        ],
         "departement_name" => "name",
         "specialization" =>  "specialization",
         "description" => "description",
@@ -176,7 +181,7 @@ class DepartementController extends Controller
         $this->authorize("viewAny" , Departement::class);
         $departements = Departement::all();
         return response()->json(
-            $this->paginate($departements)
+            Controller::paginate($departements)
         );
     }
 
@@ -228,7 +233,7 @@ class DepartementController extends Controller
      *     @OA\Response(response="422", description="Unprocessable Content"),
      *  )
      */
-    protected function createDoctor(DoctorForm $request , $id) {
+    protected function createDoctor(DoctorForm $request , $id) { 
         $this->getDepartementOr404($id);
         $this->authorize("create" , Doctor::class);
         $validated = $request->validated();
@@ -247,6 +252,8 @@ class DepartementController extends Controller
                 ["departement_id" => $id , "user_id" => $doctor_user->id]
             ));
             $doctor_user->markEmailAsVerified();
+
+            $request->image->storeAs('images' , $validated["profile_image"]);
 
             DB::commit();
             
@@ -282,7 +289,7 @@ class DepartementController extends Controller
         $this->authorize("viewAny" , Doctor::class);
 
         $doctors = Doctor::where("departement_id" , $id)->get();
-        return response()->json($this->paginate(
+        return response()->json(Controller::paginate(
             Controller::formatCollection(
                 $doctors,
                 DoctorController::ADMIN_INDEX_RESPONSE_FORMAT
@@ -336,7 +343,7 @@ class DepartementController extends Controller
      *     @OA\Response(response="422", description="Unprocessable Content"),
      *  )
      */
-    protected function createNurse(NurseForm $request , $id) {
+    protected function createNurse(NurseForm $request , $id) { 
         $this->getDepartementOr404($id);
         $this->authorize("create" , Nurse::class);
         $validated = $request->validated();
@@ -353,6 +360,8 @@ class DepartementController extends Controller
                 "departement_id" => $id
             ]));
             $user->markEmailAsVerified();
+
+            $request->image->storeAs('images' , $validated["profile_image_path"]);
 
             DB::commit();
 
@@ -389,7 +398,7 @@ class DepartementController extends Controller
         $this->authorize("viewAny" , Nurse::class);
 
         $nurses = Nurse::where("departement_id" , $id)->get();
-        return response()->json($this->paginate(
+        return response()->json(Controller::paginate(
             Controller::formatCollection(
                 $nurses,
                 NurseController::ADMIN_INDEX_RESPONSE_FORMAT
@@ -461,22 +470,12 @@ class DepartementController extends Controller
         $departement = $this->getDepartementOr404($id);
         $this->authorize("viewAny" , Nurse::class);
 
-        return response()->json($this->paginate(
+        return response()->json(Controller::paginate(
             Controller::formatCollection(
                 $departement->clinics,
                 ClinicController::PATIENT_CLINIC_INDEX_RESPONSE_FOMAT
             )
         ));
     }
-
-    public function paginate($items, $perPage = 5, $page = null, $options = [])
-    {
-
-        $page = $page ?: (Paginator::resolveCurrentPage() ?: 1);
-
-        $items = $items instanceof Collection ? $items : Collection::make($items);
-
-        return new LengthAwarePaginator($items->forPage($page, $perPage), $items->count(), $perPage, $page, $options);
-
-    }
+    
 }

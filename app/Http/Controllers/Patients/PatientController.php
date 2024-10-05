@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Patients;
 use App\Enums\AppointementStatus;
 use App\Http\Controllers\Controller;
 use App\Enums\Role;
-use App\Enums\VerificationTokenStatus;
 use App\Http\Controllers\Doctors\DoctorController;
 use App\Http\Requests\PatientForm;
 use App\Http\Requests\TokenForm;
@@ -15,16 +14,22 @@ use App\Models\Patient;
 use App\Models\User;
 use App\Models\VerifyToken;
 use Exception;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
-use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\DB;
+
+define("PATIENTS_HOST" , Controller::APP_URL . "api/patients/");
 
 class PatientController extends Controller
 {
 
-    const ADMIN_READ_RESPONSE_FORMAT = [        // Doctor's View on Patient's Data
+    public const PATIENT_RESOURCES = PATIENTS_HOST;
+
+    const ADMIN_READ_RESPONSE_FORMAT = [        // Admin's View on Patient's Data
+        "url" => [
+            "attr" => "id",
+            "meta" => true,
+            "prefix" => PatientController::PATIENT_RESOURCES
+        ],
         "id" => "id",
         "first_name" => "first_name",
         "last_name" => "last_name",
@@ -33,32 +38,46 @@ class PatientController extends Controller
         "gender" => "gender",
         "address" => "address",
         "birth_date" => "birth_date",
-        "profile_picture_path" => "profile_picture_path",
+        "profile_picture_path" => [
+            "meta" => true,
+            "attr" => "profile_picture",
+            "prefix" => Controller::STORAGE_URL
+        ],
         "ssn" => "ssn",
         "structured" => true
     ];
 
     const DOCTOR_READ_RESPONSE_FORMAT = [   // Doctor's View on Patient's Data
+        "url" => [
+            "attr" => "id",
+            "meta" => true,
+            "prefix" => PatientController::PATIENT_RESOURCES
+        ],
         "id" => "id",
         "first_name" => "first_name",
         "last_name" => "last_name",
         "gender" => "gender",
         "birth_date" => "birth_date",
-        "profile_picture_path" => "profile_picture_path",
+        "profile_picture_path" => [
+            "meta" => true,
+            "attr" => "profile_picture",
+            "prefix" => Controller::STORAGE_URL
+        ],
         "structured" => true
     ];
 
 
     public static function getPatientOr404($patientId) {
         $patient = User::where("role_id" , Role::PATIENT)->where('id' , $patientId)->first();
-        if ( $patient == null ) {
+        $user = User::where("id" , $patientId)->first();
+        if ( $patient == null || $user == null ) {
             abort(404 , "patient does not exist");       
         }
         return $patient;
     }
 
     private function getDoctors($patientId) {
-        return Doctor::join(
+        return Doctor::withTrashed()->join(
             "appointements as app" , 
             "app.doctor_id" , 
             "=" , 
@@ -112,15 +131,22 @@ class PatientController extends Controller
     protected function create(PatientForm $request) {
         
         $validated = $request->validated();
-        $user_data = array_merge($validated , ["role_id" => Role::PATIENT->value]);
+        $user_data = array_merge($validated , ["role_id" => Role::ANONYMOUS->value]);
 
         $response_data = [];
         $status_code = 0;
 
         $token = substr(sha1($validated["email"]) , 0, 10);
+        $image = $request->file('profile_picture');
 
         DB::beginTransaction();
         try {
+
+            if ($image) {
+                $image_path = $image->store("uploads/images" , "public");
+                $validated["profile_picture"] = $image_path;
+            }
+
             $user = User::create($user_data);
             VerifyToken::create([
                 "user_id" => $user->id,
@@ -216,9 +242,16 @@ class PatientController extends Controller
 
         $status_code = 0;
         $response_data = [];
+
+        $image = $request->file('profile_picture');
     
         DB::beginTransaction();
         try {
+            if ($image) {
+                $image_path = $image->store("uploads/images" , "public");
+                $validated["profile_picture"] = $image_path;
+            }
+
             $patient->update($validated);
             DB::commit();
 
@@ -257,8 +290,6 @@ class PatientController extends Controller
     protected function delete($id) {
         $patient = PatientController::getPatientOr404($id);
         $this->authorize('delete' , $patient);
-
-        $user = $patient->user;
         
         $status_code = 0;
         $response_data = [];
@@ -266,9 +297,8 @@ class PatientController extends Controller
         DB::beginTransaction();
         try {
             $patient->delete();
-            $user->delete();
-            DB::commit();
 
+            DB::commit();
             $status_code = 204;
         } catch (Exception $exp) {
             DB::rollBack();
@@ -299,7 +329,7 @@ class PatientController extends Controller
 
         $doctors = $this->getDoctors($id);
         return response()->json(
-            $this->paginate(
+            Controller::paginate(
                 Controller::formatCollection(
                     $doctors,
                     PatientController::ADMIN_READ_RESPONSE_FORMAT
@@ -325,7 +355,7 @@ class PatientController extends Controller
 
         $patients = User::where("role_id" , Role::PATIENT)->get();
         return response()->json(
-            $this->paginate(
+            Controller::paginate(
                 Controller::formatCollection(
                     $patients,
                     PatientController::ADMIN_READ_RESPONSE_FORMAT
@@ -337,7 +367,7 @@ class PatientController extends Controller
     /**
      *  @OA\Post(
      *      path="/api/patients/confirm",
-     *      tags={"Patient"},
+     *      tags={"Anonymous"},
      *      operationId = "confirmPatient",
      *      summary = "confirm patient's account",
      *      description= "Confirm Patient Endpoint.",
@@ -388,6 +418,9 @@ class PatientController extends Controller
         DB::beginTransaction();
         try {
             $current_user->markEmailAsVerified();
+            $current_user->update([
+                "role_id" => Role::PATIENT
+            ]);
             $verification_token->update([
                 "is_verified" => true
             ]);
@@ -423,11 +456,7 @@ class PatientController extends Controller
                 "details" => "current user is undefined"
             ],401);
         }
-        if ( !$current_user->hasVerifiedEmail() ) {
-            return response()->json([
-                "details" => "your email is not verified."
-            ] , 401);
-        }
+        
         if ( $current_user->getRoleID() != Role::PATIENT ) {
             return response()->json([
                 "details" => "current user is not a patient"
@@ -469,17 +498,12 @@ class PatientController extends Controller
      *       @OA\Response(response="401", description="Unauthorized"),
      *  )
      */
-    public function updateMe(UserForm $request) {
+    public function updateMe(UserForm $request) {  
         $current_user = $request->user();
         if ( $current_user == null ) {
             return response()->json([
                 "details" => "current user is undefined"
             ],401);
-        }
-        if ( !$current_user->hasVerifiedEmail() ) {
-            return response()->json([
-                "details" => "your email is not verified."
-            ] , 401);
         }
 
         if ( $current_user->getRoleID() != Role::PATIENT ) {
@@ -489,7 +513,17 @@ class PatientController extends Controller
         }
 
         $validated = $request->validated();
-        $current_user->update($validated);
+        $image = $request->file('profile_picture');
+
+        try{
+            if ($image) {
+                $image_path = $image->store("uploads/images" , "public");
+                $validated["profile_picture"] = $image_path;
+            }
+            $current_user->update($validated);
+        } catch (Exception $exp) {
+            return response()->json(["status" => "failed", "details" => $exp] , 500);
+        }
         return response()->json(
             ["status" => "updated" , "data" => $validated]
         );
@@ -515,30 +549,16 @@ class PatientController extends Controller
                 "details" => "current user is undefined"
             ],401);
         }
-
-        if ( !$current_user->hasVerifiedEmail() ) {
-            return response()->json([
-                "details" => "your email is not verified."
-            ] , 401);
-        }
         
         $doctors = $this->getDoctors($current_user->id);
         
         return response()->json(
-            $this->paginate(
+            Controller::paginate(
                 Controller::formatCollection(
                     $doctors,
                     DoctorController::PATIENT_READ_RESPONSE_FORMAT
                 )
             )
         );
-    }
-
-
-    public function paginate($items, $perPage = 5, $page = null, $options = [])
-    {
-        $page = $page ?: (Paginator::resolveCurrentPage() ?: 1);
-        $items = $items instanceof Collection ? $items : Collection::make($items);
-        return new LengthAwarePaginator($items->forPage($page, $perPage), $items->count(), $perPage, $page, $options);
     }
 }

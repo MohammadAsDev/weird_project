@@ -56,6 +56,6 @@ class ExistRule implements Rule
      */
     public function message()
     {
-        return 'selected object does not exist';
+        return 'العنصر الّذي قمتَ بإختياره غير موجود';
     }
 }

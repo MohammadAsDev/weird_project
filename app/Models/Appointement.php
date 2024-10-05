@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\AppointementStatus;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -23,8 +24,11 @@ class Appointement extends Model
 
     protected $casts = [
         'status' => AppointementStatus::class,
-        'date' => 'date',
     ];
+
+    public function getDateAttribute($date) {
+        return Carbon::parse($date)->toDateString();
+    }
 
     public function patient() {
         return $this->belongsTo(User::class , "patient_id" , "id");

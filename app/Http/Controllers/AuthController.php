@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\Role;
 use App\Http\Requests\LoginForm;
+
 
 class AuthController extends Controller {
 
@@ -35,8 +35,7 @@ class AuthController extends Controller {
         if (! $token = auth()->attempt($validated)) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
-
-        return $this->respondWithToken(["token" => $token , "role_id" => $request->user()->role_id]); # If all credentials are correct - we are going to generate a new access token and send it back on response
+        return $this->respondWithToken($token); # If all credentials are correct - we are going to generate a new access token and send it back on response
    }
 
 
@@ -55,28 +54,7 @@ class AuthController extends Controller {
         return response()->json(['message' => 'Successfully logged out']);
     }
 
-    public function confirm() {
-        
-    }
-
-    /**
-     *  @OA\Post(
-     *       path="/api/auth/refresh",
-     *       tags={"Doctor" , "Patient" , "Nurse" , "Admin"},
-     *       operationId = "refresh",
-     *       summary = "refresh user's token",
-     *       description= "Refresh Endpoint.",
-     *       @OA\Response(response="200", description="OK"),
-     *  )
-     */
-    public function refresh() {
-        # When access token will be expired, we are going to generate a new one wit this function 
-        # and return it here in response
-
-         /** @var Illuminate\Auth\AuthManager */
-         $auth = auth();
-         return $this->respondWithToken($auth->refresh());
-    }
+    
 
     /**
      * Get the token array structure.
@@ -98,7 +76,6 @@ class AuthController extends Controller {
             'expires_in' => $auth->factory()->getTTL() * 1
          ]);
     }
-
 
 }
 

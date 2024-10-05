@@ -18,7 +18,7 @@ class CreateNursesTable extends Migration
             $table->engine = 'InnoDB';
 
             $table->bigInteger('user_id')->unsigned();
-            $table->bigInteger('departement_id')->unsigned();
+            $table->bigInteger('departement_id')->unsigned()->nullable();
 
             $table->date('assigned_at');
             $table->integer('specialization');
@@ -31,7 +31,7 @@ class CreateNursesTable extends Migration
             $table->foreign("user_id")->references('id')->on('users');
 
             $table->index('departement_id');
-            $table->foreign('departement_id')->references('id')->on('departements');
+            $table->foreign('departement_id')->references('id')->on('departements')->onDelete("set null");
         });
     }
 

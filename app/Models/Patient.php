@@ -6,6 +6,8 @@ use App\Enums\BloodType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+
+// This model is deprecated
 class Patient extends Model
 {
     use HasFactory;

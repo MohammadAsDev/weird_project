@@ -13,6 +13,5 @@ enum MedicalSpecialization : int {
     case DERMATOLOGY        = 1;
     case INTERNAL           = 2;  
     case NEUROLOGY          = 3;
-    case PATHOLOGY          = 4;
-    case SURGERY            = 5;
+    case SURGERY            = 4;
 }

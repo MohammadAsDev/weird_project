@@ -6,23 +6,28 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\DoctorForm;
 use App\Enums\Role;
 use App\Http\Controllers\DepartementController;
-use App\Http\Controllers\Patients\PatientController;
 use App\Http\Requests\UserForm;
 use App\Models\Doctor;
 use App\Models\User;
+use Error;
 use Exception;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
-use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\DB;
+
+define("DOCTORS_HOST", Controller::APP_URL . "api/doctors/");
 
 class DoctorController extends Controller
 {
+    public const DOCTOR_RESOURCES = DOCTORS_HOST;
 
-    public const ADMIN_INDEX_RESPONSE_FORMAT = [
+    public const ADMIN_INDEX_RESPONSE_FORMAT = [        // Admin's view on doctors index
         "user" => [
+            "url" => [
+                "attr" => "id",
+                "meta" => true,
+                "prefix" => DoctorController::DOCTOR_RESOURCES
+            ],
             "id" => "id",
             "first_name" => "first_name",
             "last_name" => "last_name",
@@ -31,10 +36,20 @@ class DoctorController extends Controller
             "gender" => "gender",
             "address" => "address",
             "birth_date" => "birth_date",
-            "profile_picture_path" => "profile_picture_path",
+            "profile_picture_path" => [
+                "meta" => true,
+                "attr" => "profile_picture",
+                "prefix" => Controller::STORAGE_URL
+            ],
             "structured" => false
         ],
-        "departement_id" => "departement_id",
+        
+        "departement" => [
+            "attr" => "departement_id",
+            "meta" => true,
+            "prefix" => DepartementController::DEPARTEMENTS_RESOURCES
+        ],
+
         "specialization" => "specialization",
         "short_description" => "short_description",
         "rate" => "rate",
@@ -42,8 +57,13 @@ class DoctorController extends Controller
         "structured" => true
     ];
 
-    public const PATIENT_INDEX_RESPONSE_FORMAT = [
+    public const PATIENT_INDEX_RESPONSE_FORMAT = [      // Patient's view on doctors index
         "user" => [
+            "url" => [
+                "attr" => "id",
+                "meta" => true,
+                "prefix" => DoctorController::DOCTOR_RESOURCES
+            ],
             "id" => "id",
             "first_name" => "first_name",
             "last_name" => "last_name",
@@ -51,7 +71,11 @@ class DoctorController extends Controller
             "phone_number" => "phone_number",
             "gender" => "gender",
             "birth_date" => "birth_date",
-            "profile_picture_path" => "profile_picture_path",
+            "profile_picture_path" => [
+                "meta" => true,
+                "attr" => "profile_picture",
+                "prefix" => Controller::STORAGE_URL
+            ],
             "structured" => false
         ],
         "specialization" => "specialization",
@@ -62,7 +86,6 @@ class DoctorController extends Controller
 
     public const ADMIN_READ_RESPONSE_FORMAT = [     // Admin's View on Doctor's Data
         "user" => [
-            "id" => "id",
             "first_name" => "first_name",
             "last_name" => "last_name",
             "email" => "email",
@@ -70,10 +93,19 @@ class DoctorController extends Controller
             "gender" => "gender",
             "address" => "address",
             "birth_date" => "birth_date",
-            "profile_picture_path" => "profile_picture_path",
+            "profile_picture_path" => [
+                "meta" => true,
+                "attr" => "profile_picture",
+                "prefix" => Controller::STORAGE_URL
+            ],
+            "url" => [
+                "meta" => true,
+                "attr" => "id",
+                "prefix" => DoctorController::DOCTOR_RESOURCES
+            ],
             "structured" => false
         ],
-        "departement" => "departement",
+        "departement" => DepartementController::ALL_DEPARTEMENT_RESPONSE_FORMAT,
         "specialization" => "specialization",
         "short_description" => "short_description",
         "rate" => "rate",
@@ -83,7 +115,6 @@ class DoctorController extends Controller
 
     public const ADMIN_READ_DOCTOR_ONLY_FORMAT = [     // Admin's View on Doctor's Data
         "user" => [
-            "id" => "id",
             "first_name" => "first_name",
             "last_name" => "last_name",
             "email" => "email",
@@ -91,7 +122,16 @@ class DoctorController extends Controller
             "gender" => "gender",
             "address" => "address",
             "birth_date" => "birth_date",
-            "profile_picture_path" => "profile_picture_path",
+            "profile_picture_path" => [
+                "meta" => true,
+                "attr" => "profile_picture",
+                "prefix" => Controller::STORAGE_URL
+            ],
+            "url" => [
+                "meta" => true,
+                "attr" => "id",
+                "prefix" => DoctorController::DOCTOR_RESOURCES
+            ],
             "structured" => false
         ],
         "specialization" => "specialization",
@@ -103,7 +143,6 @@ class DoctorController extends Controller
 
     public const DOCTOR_READ_RESPONSE_FORMAT = [     // Admin's View on Doctor's Data
         "user" => [
-            "id" => "id",
             "first_name" => "first_name",
             "last_name" => "last_name",
             "email" => "email",
@@ -111,7 +150,16 @@ class DoctorController extends Controller
             "gender" => "gender",
             "address" => "address",
             "birth_date" => "birth_date",
-            "profile_picture_path" => "profile_picture_path",
+            "profile_picture_path" => [
+                "meta" => true,
+                "attr" => "profile_picture",
+                "prefix" => Controller::STORAGE_URL
+            ],
+            "url" => [
+                "meta" => true,
+                "attr" => "id",
+                "prefix" => DoctorController::DOCTOR_RESOURCES
+            ],
             "structured" => false
         ],
         "departement" => DepartementController::ALL_DEPARTEMENT_RESPONSE_FORMAT,
@@ -124,11 +172,22 @@ class DoctorController extends Controller
 
     public const PATIENT_READ_RESPONSE_FORMAT = [   // Patient's View on Doctor's Data
         "user" => [
+            "id" => "id",
             "first_name" => "first_name",
             "last_name" => "last_name",
             "phone_number" => "phone_number",
             "gender" => "gender",
-            "profile_picture_path" => "profile_picture_path",
+            "email" => "email",
+            "profile_picture_path" => [
+                "meta" => true,
+                "attr" => "profile_picture",
+                "prefix" => Controller::STORAGE_URL
+            ],
+            "url" => [
+                "meta" => true,
+                "attr" => "id",
+                "prefix" => DoctorController::DOCTOR_RESOURCES
+            ],
             "structured" => false
         ] , 
         "specialization" => "specialization",
@@ -208,18 +267,29 @@ class DoctorController extends Controller
         DB::beginTransaction();
         $status_code = 0;
         $repsonse_data = [];
+        $image = $request->file('profile_picture');
+
         try {
+
+            if ($image) {
+                $image_path = $image->store("uploads/images" , "public");
+                $validated["profile_picture"] = $image_path;
+            }
+
             $user = User::create(array_merge($validated , ["role_id" => Role::DOCTOR]));
             $user->markEmailAsVerified();
 
-            Doctor::create(array_merge([
+            $doctor = Doctor::create(array_merge([
                 'user_id' => $user->id
             ] , $validated));
-            
+
             DB::commit();
      
             $status_code = 200;
-            $repsonse_data = ["status" => "created" , "data" => $validated];
+            $repsonse_data = [
+                "status" => "created" , 
+                "data" => Controller::formatData($doctor , DoctorController::ADMIN_READ_RESPONSE_FORMAT)
+            ];
      
         } catch (Exception $exp) {
             DB::rollBack();
@@ -240,6 +310,10 @@ class DoctorController extends Controller
      *      operationId = "readDoctor",
      *      summary = "read a doctor info",
      *      description= "Read a Specific Doctor Info Endpoint.",
+     *      @OA\Parameter(name="full-detailed" , description="full-detailed doctor" , in="query" , required=false,
+     *          @OA\Schema(
+     *              type="boolean"
+     *          )),
      *      @OA\Parameter(
      *          name="id" , 
      *          description="doctor's id" , 
@@ -255,11 +329,15 @@ class DoctorController extends Controller
      */
     protected function read(Request $request, $id) {
         $doctor = DoctorController::getDoctorOr404($id);
-        $current_user = $request->user();
-        $response_format = 
-            $current_user == null ? 
-            DoctorController::PATIENT_READ_RESPONSE_FORMAT : 
-            DoctorController::ADMIN_READ_RESPONSE_FORMAT ;
+        $full_detailed_query = $request->query("full-detailed" , false);
+
+        if($full_detailed_query) 
+            $this->authorize("view" , $doctor);
+        
+            $response_format =   
+            $full_detailed_query ?  
+            DoctorController::ADMIN_READ_RESPONSE_FORMAT : 
+            DoctorController::PATIENT_READ_RESPONSE_FORMAT;
         return response()->json(
             Controller::formatData(
                 $doctor ,
@@ -311,14 +389,23 @@ class DoctorController extends Controller
         $this->authorize('update' , $doctor);
 
         $validated = $request->validated();
+        $image = $request->file('profile_picture');
         
         $status_code = 0;
         $response_data = [];
 
+
         DB::beginTransaction();
         try {
+
+            if ($image) {
+                $image_path = $image->store("uploads/images" , "public");
+                $validated["profile_picture"] = $image_path;
+            }
+
             $doctor->user->update($validated);
             $doctor->update($validated);
+
             DB::commit();
 
             $status_code = 200;
@@ -366,6 +453,7 @@ class DoctorController extends Controller
 
             $status_code = 204;
         } catch ( Exception $exp ) {
+            error_log($exp);
             DB::rollBack();
 
             $status_code = 500;
@@ -380,6 +468,10 @@ class DoctorController extends Controller
      *      tags={"Admin" , "Anonymous"},
      *      operationId = "List Doctors",
      *      summary = "list all doctors",
+     *      @OA\Parameter(name="full-detailed" , description="full-detailed doctor" , in="query" , required=false,
+     *          @OA\Schema(
+     *              type="boolean"
+     *          )),
      *      description= "List All Doctors Endpoint.",
      *      @OA\Response(response="200", description="OK"),
      *      @OA\Response(response="403", description="Forbidden")
@@ -387,12 +479,17 @@ class DoctorController extends Controller
      */
     protected function index(Request $request){
         $doctors = Doctor::all();
-        $current_user = $request->user();
+        $full_detailed_query = $request->query("full-detailed" , false);
+        
+        if($full_detailed_query)
+            $this->authorize("viewAny" , Doctor::class);
+
         $response_format = 
-            $current_user ?
+            $full_detailed_query ?
             DoctorController::ADMIN_INDEX_RESPONSE_FORMAT :
             DoctorController::PATIENT_INDEX_RESPONSE_FORMAT;
-        return response()->json($this->paginate(
+
+        return response()->json(Controller::paginate(
             Controller::formatCollection(
                 $doctors,
                 $response_format
@@ -421,13 +518,15 @@ class DoctorController extends Controller
 
         $query = htmlentities($request->query("name"));
         $suggested_doctors = 
-            Doctor::join("users" , "users.id" , "doctors.user_id")->where(
+            Doctor::join("users" , "users.id" , "doctors.user_id")
+            ->where("deleted_at" , null)
+            ->where(
                 DB::raw(
                     "concat(first_name , ' ' , last_name)"
                 ) , "LIKE" , "%".$query."%")->get();
 
 
-        return response()->json($this->paginate(
+        return response()->json(Controller::paginate(
             Controller::formatCollection(
                 $suggested_doctors,
                 DoctorController::PATIENT_READ_RESPONSE_FORMAT
@@ -507,6 +606,7 @@ class DoctorController extends Controller
                 "details" => "current user is undefined"
             ],401);
         }
+
         $current_doctor = Doctor::where(
             "user_id" , $current_user->id
         )->first();
@@ -515,8 +615,22 @@ class DoctorController extends Controller
                 "details" => "the current user is not a doctor"
             ] , 403);
         }
+        
         $validated = $request->validated();
-        $current_user->update($validated);
+        $image = $request->file('profile_picture');
+
+        try{
+            if ($image) {
+                $image_path = $image->store("uploads/images" , "public");
+                $validated["profile_picture"] = $image_path;
+            }
+            
+            $current_user->update($validated);
+            
+        } catch (Exception $exp) {
+            return response()->json(["status" => "failed" , "details" => $exp] , 500);
+        }
+        
         return response()->json(
             ["status" => "updated" , "data" => $validated]
         );
@@ -537,7 +651,7 @@ class DoctorController extends Controller
      *      @OA\Response(response="401", description="Unauthorized"),
      *  )
      */
-    public function bestDoctors(Request $request) {
+    public function bestDoctors() {
         
         $best_doctors = Doctor::orderBy('rate' , 'DESC')->take(4)->get();
         return response()->json([
@@ -547,15 +661,5 @@ class DoctorController extends Controller
                 DoctorController::PATIENT_READ_RESPONSE_FORMAT
             )
         ]);
-    }
-
-    public function paginate($items, $perPage = 5, $page = null, $options = []) {
-
-        $page = $page ?: (Paginator::resolveCurrentPage() ?: 1);
-
-        $items = $items instanceof Collection ? $items : Collection::make($items);
-
-        return new LengthAwarePaginator($items->forPage($page, $perPage), $items->count(), $perPage, $page, $options);
-
     }
 }

@@ -26,10 +26,11 @@ class CreateDoctorsTable extends Migration
             $table->integer('rate');
             $table->timestamps();
 
+
             $table->primary('user_id');
             $table->foreign('user_id')->references('id')->on('users');
             $table->index('departement_id');
-            $table->foreign('departement_id')->references('id')->on('departements');
+            $table->foreign('departement_id')->references('id')->on('departements')->onDelete("set null");
         });
     }
 

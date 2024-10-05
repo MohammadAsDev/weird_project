@@ -20,6 +20,27 @@ class UserForm extends FormRequest
         return true;
     }
 
+    public function messages()
+    {
+        return [
+            "first_name.min" => "يجب أنْ يكون الإسم الأول أكثر من حرفين",
+            "first_name.max" => "يجب أنْ يكون الإسم الأول أقل من 255 حرف",
+            "first_name.regex" => "يجب أنْ يكون الإسم الأول باللغة العربيّة",
+            
+            "last_name.min" => "يجب أنْ يكون الإسم الأخير أكثر من حرفين",
+            "last_name.max" => "يجب أنْ يكون الإسم الأخير أقل من 255 حرف",
+            "last_name.regex" => "يجب أنْ يكون الإسم الأخير باللغة العربيّة",
+
+            "password.min" => "يجب أنْ يكون كلمة السّر أكثر من حرفين",
+            "password.max" => "يجب أنْ يكون كلمة السّر أقل من 255 حرف",
+
+            "address.min" => "يجب أنْ يكون العنوان أكثر من حرفين",
+            "address.max" => "يجب أنْ يكون العنوان أقل من 255 حرف",
+
+            "profile_picture.max" => "اسم الصورة قد تجاوز ال 500 محرف",
+            "profile_picture.mime" => "يجب أنْ تكون صيغة الصّور png , jpeg أو jpg"
+        ];
+    }
 
     protected function failedValidation(Validator $validator)
     {
@@ -35,13 +56,14 @@ class UserForm extends FormRequest
     {
         if ( $this->isMethod('POST') ) {
             return [
-                'first_name' => 'required|string|max:255|min:2|regex:/^[a-zA-Z\s]+$/',
-                'last_name'  => 'required|string|max:255|min:2|regex:/^[a-zA-Z\s]+$/',
+                'first_name' => 'required|string|max:255|min:2|regex:/^[\p{Arabic}\s]+$/u',
+                'last_name'  => 'required|string|max:255|min:2|regex:/^[\p{Arabic}\s]+$/u',
                 'email' => 'required|email|unique:users',
                 'password' => "required|string|max:500|min:9",
                 'phone_number' => 'required|unique:users|regex:/^0[0-9]{9}/', 
                 'address' => "required|string|max:100|min:2",
-    
+                'profile_picture' => "image|mimes:jpeg,jpg,png|max:500",
+
                 'gender' => [
                     "required",
                     "integer",
@@ -56,12 +78,14 @@ class UserForm extends FormRequest
             ];
         } else if ( $this->isMethod('PUT') ) {
             return [
-                'first_name' => 'string|max:255|min:2|regex:/^[a-zA-Z\s]+$/',
-                'last_name'  => 'string|max:255|min:2|regex:/^[a-zA-Z\s]+$/',
+                'first_name' => 'string|max:255|min:2|regex:/^[\p{Arabic}\s]+$/u',
+                'last_name'  => 'string|max:255|min:2|regex:/^[\p{Arabic}\s]+$/u',
                 'email' => 'email|unique:users',
                 'password' => "string|max:500|min:9",
                 'phone_number' => 'unique:users|regex:/^0[0-9]{9}/', 
                 'address' => "string|max:100|min:2",
+                'profile_picture' => "image|mimes:jpeg,png|max:500",
+
 
                 'gender' => [
                     "integer",

@@ -23,6 +23,14 @@ class ClinicForm extends FormRequest
         throw new HttpResponseException(response()->json(['errors' => $validator->errors()], 422));
     }
 
+    public function messages()
+    {
+        return [
+            "clinic_code.unique" => "رمز الغرفة هو رمز فريد في المشفى",
+            
+        ];
+    }
+
     /**
      * Get the validation rules that apply to the request.
      *

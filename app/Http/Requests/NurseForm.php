@@ -17,6 +17,14 @@ class NurseForm extends UserForm
         return parent::authorize();
     }
 
+    public function messages()
+    {
+        return [
+            "short_description.max" => "يحب أن يكون الطول الأقصى للوصف 500 حرف",
+            "assigned_at.before_or_equal" => "تاريخ التعين لم يحدث بعد",
+        ];
+    }
+
 
     /**
      * Get the validation rules that apply to the request.

@@ -40,6 +40,6 @@ class AppointementStatusRule implements Rule
      */
     public function message()
     {
-        return 'Appointement status should be accepted or rejected';
+        return 'حالة الموعد يجب أنْ تكون قبول الموعد أو رفضه';
     }
 }

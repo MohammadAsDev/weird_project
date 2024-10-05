@@ -28,8 +28,8 @@ class CreateAppointementsTable extends Migration
             $table->index('doctor_id');
             $table->index('patient_id');
 
-            $table->foreign('doctor_id')->references('user_id')->on('doctors');
-            $table->foreign('patient_id')->references('id')->on('users');
+            $table->foreign('doctor_id')->references('user_id')->on('doctors')->onDelete("cascade");
+            $table->foreign('patient_id')->references('id')->on('users')->onDelete("cascade");
 
             $table->timestamps();
         });

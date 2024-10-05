@@ -22,11 +22,10 @@ class PatientPolicy
         return $is_owner;
     }
 
-    private function isPatient(User $user) {
+    private function isAnonymous(User $user) {
         $role = $user->getRoleID();
-        $is_patietn = $role == Role::PATIENT;
-        return $is_patietn;
-    } 
+        return $role == Role::ANONYMOUS;
+    }
 
     /**
      * Determine whether the user can view any models.
@@ -118,7 +117,7 @@ class PatientPolicy
      */
     public function confirm(User $user)
     {
-        return $this->isPatient($user);
+        return $this->isAnonymous($user);
     }
 
     /**

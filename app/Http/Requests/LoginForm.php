@@ -23,6 +23,14 @@ class LoginForm extends FormRequest
         throw new HttpResponseException(response()->json(['errors' => $validator->errors()], 422));
     }
 
+    public function messages()
+    {
+        return [
+            "email.email" => "البريد الإلكتروني غير صحيح",
+            "password.max" => "طول كلمة السّر أكثر من 500 محرف",
+        ];
+    }
+
 
     /**
      * Get the validation rules that apply to the request.

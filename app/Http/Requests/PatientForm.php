@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Rules\BloodTypeRule;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
@@ -20,6 +19,14 @@ class PatientForm extends UserForm
     protected function failedValidation(Validator $validator)
     {
         throw new HttpResponseException(response()->json(['errors' => $validator->errors()], 422));
+    }
+
+
+    public function messages()
+    {
+        return [
+            "ssn.regex" => "يجب أنْ يكون الرقم الوطني مؤلف من 11 خانة",
+        ];
     }
 
     /**

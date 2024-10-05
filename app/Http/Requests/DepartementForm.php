@@ -24,6 +24,16 @@ class DepartementForm extends FormRequest
         throw new HttpResponseException(response()->json(['errors' => $validator->errors()], 422));
     }
 
+    public function messages()
+    {
+        return [
+            "name.max" => "يجب أنْ يكون اسم القسم أقل من 255 محرف",
+            "name.min" => "يحب أن يكون اسم القسم أقل من 2 محرف",
+            
+            "description.max" => "يجب أنْ يكون الوصف أقل من 255 محرف",
+            "description.min" => "يجب أنْ يكون الوصف أكثر من 2 محرف",
+        ];
+    }
 
     /**
      * Get the validation rules that apply to the request.

@@ -25,6 +25,13 @@ class AppointementForm extends FormRequest
         throw new HttpResponseException(response()->json(['errors' => $validator->errors()], 422));
     }
     
+    public function messages()
+    {
+        return [
+            "date.after" => "تاريخ الموعد إبتداءً من غد",
+        ];
+    }
+
     /**
      * Get the validation rules that apply to the request.
      *

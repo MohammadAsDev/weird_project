@@ -25,14 +25,14 @@ class CreateUsersTable extends Migration
             $table->date('birth_date');
             $table->integer('gender');
             $table->string('address');
-            $table->string('profile_picture_path')->default('profiles/pictures/user_template.svg');
+            $table->string('profile_picture')->default('user_template.png');
             $table->integer('role_id');
 
             $table->string('ssn')->nullable();
 
+
             $table->timestamp('email_verified_at')->nullable();
 
-            $table->rememberToken();
             $table->timestamps();
         });
     }

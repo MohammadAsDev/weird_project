@@ -22,7 +22,7 @@ class CreateClinicsTable extends Migration
             $table->timestamps();
 
             $table->index('departement_id');
-            $table->foreign('departement_id')->references('id')->on('departements');
+            $table->foreign('departement_id')->references('id')->on('departements')->onDelete('cascade');
         });
     }
 

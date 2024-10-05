@@ -4,36 +4,48 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ClinicForm;
 use App\Models\Clinic;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Pagination\Paginator;
+
+define("CLINICS_HOST" , $_SERVER["HTTP_HOST"] . "/api/clinics/");
 
 class ClinicController extends Controller
 {
 
+    public const CLINIC_RESOURCES = CLINICS_HOST;
 
-    // General Clinics Response Format
-
-    const PATIENT_CLINIC_ONLY_RESPONSE_FOMAT = [
-        "id" => "id",
+    const PATIENT_CLINIC_ONLY_RESPONSE_FOMAT = [        // Patient view on clinic's data
+        "url" => [
+            "meta" => true,
+            "attr" => "id",
+            "prefix" => ClinicController::CLINIC_RESOURCES
+        ],
+        "clinic_id" => "id",
         "clinc_type" => "clinic_type",
-        "departement" => DepartementController::ALL_DEPARTEMENT_RESPONSE_FORMAT,
         "clinic_code" => "clinic_code",
         "structured" => true
     ];
 
-    const PATIENT_CLINIC_INDEX_RESPONSE_FOMAT = [
-        "id" => "id",
+    const PATIENT_CLINIC_INDEX_RESPONSE_FOMAT = [       // Patient view on clinics index
+        "url" => [
+            "meta" => true,
+            "attr" => "id",
+            "prefix" => ClinicController::CLINIC_RESOURCES
+        ],
+        "clinic_id" => "id",
         "clinc_type" => "clinic_type",
-        "departement_id" => "departement_id",
+        "departement" => "departement",
         "clinic_code" => "clinic_code",
         "structured" => true
     ];
 
 
-    const PATIENT_CLINIC_RESPONSE_FOMAT = [
-        "id" => "id",
+    const PATIENT_CLINIC_RESPONSE_FORMAT = [            // Patient view on clinic's view
+        "url" => [
+            "meta" => true,
+            "attr" => "id",
+            "prefix" => ClinicController::CLINIC_RESOURCES
+        ],
+        "clinic_id" => "id",
         "clinc_type" => "clinic_type",
         "departement" =>  DepartementController::ALL_DEPARTEMENT_RESPONSE_FORMAT,
         "clinic_code" => "clinic_code",
@@ -64,7 +76,7 @@ class ClinicController extends Controller
     public function index() {
         $this->authorize('viewAny' , Clinic::class);
         $clinics = Clinic::all();
-        return response()->json($this->paginate(
+        return response()->json(Controller::paginate(
             Controller::formatCollection(
                 $clinics,
                 ClinicController::PATIENT_CLINIC_INDEX_RESPONSE_FOMAT
@@ -95,7 +107,7 @@ class ClinicController extends Controller
         $this->authorize('view' , $clinic);
         return response()->json(Controller::formatData(
                 $clinic, 
-                ClinicController::PATIENT_CLINIC_RESPONSE_FOMAT
+                ClinicController::PATIENT_CLINIC_RESPONSE_FORMAT
             )
         );
     }
@@ -175,7 +187,7 @@ class ClinicController extends Controller
         $clinic->update($validated);
         return response()->json(Controller::formatData(
                 $clinic , 
-                ClinicController::PATIENT_CLINIC_RESPONSE_FOMAT
+                ClinicController::PATIENT_CLINIC_RESPONSE_FORMAT
             )
         );
     }
@@ -204,11 +216,4 @@ class ClinicController extends Controller
         return response()->json([] , 204);
     }
 
-
-    
-    public function paginate($items, $perPage = 5, $page = null, $options = []) {
-        $page = $page ?: (Paginator::resolveCurrentPage() ?: 1);
-        $items = $items instanceof Collection ? $items : Collection::make($items);
-        return new LengthAwarePaginator($items->forPage($page, $perPage), $items->count(), $perPage, $page, $options);
-    }
 }

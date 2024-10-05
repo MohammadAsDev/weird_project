@@ -23,6 +23,17 @@ class RoutineTestForm extends FormRequest
         throw new HttpResponseException(response()->json(['errors' => $validator->errors()], 422));
     }
 
+    public function messages()
+    {
+        return [
+            "breathing_rate.min" => "يجب أنْ يكون معدل التنفس بين 0 و 100",
+            "breathing_rate.max" => "يجب أنْ يكون معدل التنفس بين 0 و 100",
+
+            "pulse_rate.min" => "يجب أنْ يكون معدل التنفس بين 0 و 100",
+            "pulse_rate.max" => "يجب أنْ يكون معدل التنفس بين 0 و 100"
+        ];
+    }
+
     /**
      * Get the validation rules that apply to the request.
      *

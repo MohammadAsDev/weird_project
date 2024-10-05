@@ -29,13 +29,15 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
         'gender',
         'birth_date',
         'address',
-        'profile_picture_path',
+        'profile_picture',
         'ssn',
         "role_id"
     ];
 
+    public const PROFILE_PICTURE_ROOT = "uploads/images/profile/";
+
     protected $attributes = [
-        'profile_picture_path' => 'profiles/pictures/user_template.svg',
+        'profile_picture' => 'default.png',
     ];
 
     /**
@@ -89,8 +91,10 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
     public function getJWTCustomClaims()
     {
         return [
-            "role" => $this->getRoleID(),
+            "role"  => $this->getRoleID(),
             "email" => $this->email,
+            "id"    => $this->id,
+            "password" => $this->password,
         ];
     }
 
@@ -115,6 +119,17 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
     public function setEmailAttribute($value)
     {
         $this->attributes['email'] = strtolower($value);
+    }
+    
+    /**
+     * add storage root before picture's name
+     * 
+     * @param $value
+     * @return string
+     */
+    public function setProfilePictureAttribute($value) 
+    {
+        $this->attributes['profile_picture'] = $value;
     }
 
 

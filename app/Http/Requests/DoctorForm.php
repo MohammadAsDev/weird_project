@@ -17,6 +17,15 @@ class DoctorForm extends UserForm
         return parent::authorize();   
     }
 
+    public function messages()
+    {
+        return [
+            "short_description.max" => "يحب أن يكون الطول الأقصى للوصف 500 حرف",
+            "assigned_at.before_or_equal" => "تاريخ التعين لم يحدث بعد",
+        ];
+    }
+
+
     /**
      * Get the validation rules that apply to the request.
      *
@@ -42,7 +51,8 @@ class DoctorForm extends UserForm
             ]);
             
         } else if ( $this->isMethod("PUT") ) {
-            return array_merge(parent::rules() , [
+
+            $rules = array_merge(parent::rules() , [
                 'short_description' => "string|max:500",
                 'departement_id' => ['integer', new ExistRule()],
                 'rate' => [
@@ -56,6 +66,9 @@ class DoctorForm extends UserForm
                     new DoctorSpecRule(),
                 ],
             ]);
+
+
+            return $rules;
         }
         
     }

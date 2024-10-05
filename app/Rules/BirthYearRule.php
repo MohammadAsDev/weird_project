@@ -2,10 +2,8 @@
 
 namespace App\Rules;
 
-use App\Http\Controllers\Controller;
 use Carbon\Carbon;
 use Illuminate\Contracts\Validation\Rule;
-use Illuminate\Support\Facades\Date;
 
 class BirthYearRule implements Rule
 {
@@ -44,6 +42,6 @@ class BirthYearRule implements Rule
      * @return string
      */
     public function message()    {
-        return 'your age is lower than ' . (string)BirthYearRule::MIN_AGE;
+        return 'يجب أنْ يكون عمرك أكثر من ' . (string)BirthYearRule::MIN_AGE;
     }
 }

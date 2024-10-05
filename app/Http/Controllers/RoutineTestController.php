@@ -8,18 +8,31 @@ use App\Http\Requests\RoutineTestForm;
 use App\Models\Doctor;
 use App\Models\RoutineTest;
 use App\Models\User;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
-use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Pagination\Paginator;
+
+define("TESTS_HOST" , Controller::APP_URL . "api/tests/");
 
 class RoutineTestController extends Controller
 {
   
-    public const ADMIN_INDEX_RESPONSE_FORMAT = [
-        "id" => "id",
-        "patient_id" => "patient_id",
-        "doctor_id" => "doctor_id",
+    public const TEST_RESOURCES = TESTS_HOST;
+
+    public const ADMIN_INDEX_RESPONSE_FORMAT = [        // Admin view on tests index
+        "url" => [
+            "meta" => true,
+            "attr" => "id",
+            "prefix" => RoutineTestController::TEST_RESOURCES
+        ],
+        "patient" => [
+            "meta" => true,
+            "attr" => "patient_id",
+            "prefix" => PatientController::PATIENT_RESOURCES
+        ],
+        "doctor" => [
+            "meta" => true,
+            "attr" => "doctor_id",
+            "prefix" => DoctorController::DOCTOR_RESOURCES
+        ],
         "breathing_rate" => "breathing_rate",
         "body_temperature" => "body_temperature",
         "pulse_rate" => "pulse_rate",
@@ -29,9 +42,17 @@ class RoutineTestController extends Controller
     ];
 
 
-    public const PATIENT_INDEX_RESPONSE_FORMAT = [
-        "id" => "id",
-        "doctor_id" => "doctor_id",
+    public const PATIENT_INDEX_RESPONSE_FORMAT = [          // Patient view on test's data
+        "url" => [
+            "meta" => true,
+            "attr" => "id",
+            "prefix" => RoutineTestController::TEST_RESOURCES
+        ],
+        "doctor" => [
+            "meta" => true,
+            "attr" => "doctor_id",
+            "prefix" => DoctorController::DOCTOR_RESOURCES
+        ],
         "breathing_rate" => "breathing_rate",
         "body_temperature" => "body_temperature",
         "pulse_rate" => "pulse_rate",
@@ -41,9 +62,17 @@ class RoutineTestController extends Controller
     ];
 
 
-    public const DOCTOR_INDEX_RESPONSE_FORMAT = [
-        "id" => "id",
-        "doctor_id" => "doctor_id",
+    public const DOCTOR_INDEX_RESPONSE_FORMAT = [           // Doctor view on test's data
+        "url" => [
+            "meta" => true,
+            "attr" => "id",
+            "prefix" => RoutineTestController::TEST_RESOURCES
+        ],
+        "doctor" => [
+            "meta" => true,
+            "attr" => "doctor_id",
+            "prefix" => DoctorController::DOCTOR_RESOURCES
+        ],
         "breathing_rate" => "breathing_rate",
         "body_temperature" => "body_temperature",
         "pulse_rate" => "pulse_rate",
@@ -53,7 +82,13 @@ class RoutineTestController extends Controller
     ];
 
 
-    public const ADMIN_READ_RESPONSE_FORMAT = [     // Admin's View
+    public const ADMIN_READ_RESPONSE_FORMAT = [             // Admin view on test's data
+        "url" => [
+            "meta" => true,
+            "attr" => "id",
+            "prefix" => RoutineTestController::TEST_RESOURCES
+        ],
+        "test_id" => "id",
         "patient" => PatientController::ADMIN_READ_RESPONSE_FORMAT,
         "doctor" => DoctorController::ADMIN_READ_DOCTOR_ONLY_FORMAT,
         "breathing_rate" => "breathing_rate",
@@ -64,7 +99,13 @@ class RoutineTestController extends Controller
         "created_at" => "created_at"
     ];
 
-    public const PATEINT_READ_RESPONSE_FORMAT = [   // Patient's View
+    public const PATEINT_READ_RESPONSE_FORMAT = [           // Patient view on test's data
+        "url" => [
+            "meta" => true,
+            "attr" => "id",
+            "prefix" => RoutineTestController::TEST_RESOURCES
+        ],
+        "test_id" => "id",
         "doctor" => DoctorController::PATIENT_READ_RESPONSE_FORMAT,
         "breathing_rate" => "breathing_rate",
         "body_temperature" => "body_temperature",
@@ -74,7 +115,13 @@ class RoutineTestController extends Controller
         "created_at" => "created_at"
     ];
 
-    public const DOCTOR_READ_RESPONSE_FORMAT = [    // Doctor's View
+    public const DOCTOR_READ_RESPONSE_FORMAT = [            // Doctor view on test's data
+        "url" => [
+            "meta" => true,
+            "attr" => "id",
+            "prefix" => RoutineTestController::TEST_RESOURCES
+        ],
+        "test_id" => "id",
         "patient" => PatientController::DOCTOR_READ_RESPONSE_FORMAT,
         "breathing_rate" => "breathing_rate",
         "body_temperature" => "body_temperature",
@@ -83,6 +130,8 @@ class RoutineTestController extends Controller
         "prescription" => "prescription",
         "created_at" => "created_at"
     ];
+
+
 
     public static function getTestOr404($testId) {
         $test = RoutineTest::where(
@@ -112,7 +161,7 @@ class RoutineTestController extends Controller
         $tests = RoutineTest::all();
         
         return response()->json(
-            $this->paginate(Controller::formatCollection(
+            Controller::paginate(Controller::formatCollection(
                 $tests,
                 RoutineTestController::ADMIN_INDEX_RESPONSE_FORMAT
             )
@@ -173,7 +222,7 @@ class RoutineTestController extends Controller
 
         $tests = $patient->tests;
         
-        return response()->json($this->paginate(
+        return response()->json(Controller::paginate(
             Controller::formatCollection(
                 $tests,
                 RoutineTestController::PATIENT_INDEX_RESPONSE_FORMAT
@@ -205,7 +254,7 @@ class RoutineTestController extends Controller
 
         $tests = $doctor->tests;
         
-        return response()->json($this->paginate(
+        return response()->json(Controller::paginate(
             Controller::formatCollection(
                 $tests,
                 RoutineTestController::DOCTOR_INDEX_RESPONSE_FORMAT
@@ -241,7 +290,7 @@ class RoutineTestController extends Controller
         }
 
         $tests = $patient->tests;
-        return response()->json($this->paginate(
+        return response()->json(Controller::paginate(
             Controller::formatCollection(
                 $tests,
                 RoutineTestController::PATIENT_INDEX_RESPONSE_FORMAT
@@ -321,7 +370,7 @@ class RoutineTestController extends Controller
         }
 
         $tests = $doctor->tests;
-        return response()->json($this->paginate(
+        return response()->json(Controller::paginate(
             Controller::formatCollection(
                 $tests,
                 RoutineTestController::DOCTOR_INDEX_RESPONSE_FORMAT
@@ -378,9 +427,9 @@ class RoutineTestController extends Controller
      *      path="/api/tests/me/patients/{id}/",
      *      tags={"Doctor"},
      *      operationId = "readCurrentDoctorTest",
-     *      summary = "read routine test made by current doctor",
+     *      summary = "read routine tests made by current doctor for specific patient",
      *      description= "Read Current Doctor Test Endpoint.",
-     *      @OA\Parameter(name="id", description="test's id" , in="path" , required=true,
+     *      @OA\Parameter(name="id", description="patient's id" , in="path" , required=true,
      *           @OA\Schema(
      *               type="integer"
      *           )),
@@ -398,32 +447,16 @@ class RoutineTestController extends Controller
             ],401);
         }
         
-        $test = RoutineTest::where(
+        $tests = RoutineTest::where(
             "doctor_id" , $current_user->id
-        )->where("id", $id)->first();
-        if ( $test == null ) {
-            return response()->json([
-                "details" => "selected test is not in your tests"
-            ],403);
-        }
+        )->where("patient_id", $id)->get();
 
         return response()->json(
-            Controller::formatData(
-                $test,
+            Controller::formatCollection(
+                $tests,
                 RoutineTestController::DOCTOR_READ_RESPONSE_FORMAT
             )
         );
     }
 
-
-    public function paginate($items, $perPage = 5, $page = null, $options = [])
-    {
-
-        $page = $page ?: (Paginator::resolveCurrentPage() ?: 1);
-
-        $items = $items instanceof Collection ? $items : Collection::make($items);
-
-        return new LengthAwarePaginator($items->forPage($page, $perPage), $items->count(), $perPage, $page, $options);
-
-    }
 }

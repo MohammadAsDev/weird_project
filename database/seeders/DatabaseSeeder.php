@@ -2,15 +2,25 @@
 
 namespace Database\Seeders;
 
-use App\Enums\ClinicType;
 use App\Enums\Gender;
 use App\Enums\MedicalSpecialization;
 use App\Enums\Rate;
 use App\Enums\Role;
+use Faker\Factory;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
+    private function generateArabicFakeName($gender) {
+        $faker = Factory::create('ar_JO');
+        return $faker->firstName($gender) ;
+    }
+
+    private function generateFakeArabicText() {
+        $faker = Factory::create('ar_JO');
+        return $faker->realText();
+    }
+
     /**
      * Seed the application's database.
      *
@@ -52,18 +62,18 @@ class DatabaseSeeder extends Seeder
 
 
         $departement = \App\Models\Departement::create([
-            "name" => "seed departement",
-            "description" => "seed-created departement",
+            "name" => "قسم تجريبي",
+            "description" => "هذا القسم تمَّ إنشاءه بشكل تجريبي في المشفى",
             "specialization" => MedicalSpecialization::SURGERY
         ]);
 
         // Create Admin User
         $admin = \App\Models\User::create([
-            'first_name' => 'John',
-            'last_name' => 'Doe',
+            'first_name' => 'المدير',
+            'last_name' => 'التنفيذي',
             'phone_number' => '0997194923',
             'email' => 'admin@gmail.com',
-            'password' => "admin",
+            'password' => "123456789",
             'birth_date' => "2001-12-04",
             'address' => "Homs",
             "role_id" => Role::ADMIN,
@@ -73,8 +83,8 @@ class DatabaseSeeder extends Seeder
 
         // Create a new Doctor
         $doctor_user = \App\Models\User::create([
-            'first_name' => 'SeedDoctor',
-            'last_name' => 'SeedDoctor',
+            'first_name' => 'طبيب',
+            'last_name' => 'تجريبي',
             'phone_number' => '0912312312',
             'email' => 'seed.Doctor@gmail.com',
             'password' => "123456789",
@@ -91,7 +101,7 @@ class DatabaseSeeder extends Seeder
             'departement_id' => $departement->id,
             'specialization' => MedicalSpecialization::ANESTHESIOLOGY,
             'rate' => Rate::SENIOR,
-            'short_description' => "testing doctor",
+            'short_description' => "هذا الطبيب ليس موجوداً في الواقع، فقد تمَّ إنشاءه من أجل إختبار",
             "assigned_at" => "2010-05-05"
         ]);
 
@@ -104,8 +114,8 @@ class DatabaseSeeder extends Seeder
 
         // Create a new Nures
         $nurse_user = \App\Models\User::create([
-            'first_name' => 'SeedNurse',
-            'last_name' => 'SeedNurse',
+            'first_name' => 'ممرض',
+            'last_name' => 'تجريبي',
             'phone_number' => '0912345612',
             'email' => 'seed.Nurse@gmail.com',
             'password' => "123456789",
@@ -120,7 +130,7 @@ class DatabaseSeeder extends Seeder
             'rate' => Rate::GOOD,
             'departement_id' => $departement->id,
             'specialization' => MedicalSpecialization::INTERNAL,
-            'short_description' => "testing nurse",
+            'short_description' => "ممرض تجريبي تمَّ إنشاءه لإختبار عمليّة العرض",
             'user_id' => $nurse_user->id,
             "assigned_at" => "2010-05-05"
         ]);
@@ -128,8 +138,8 @@ class DatabaseSeeder extends Seeder
 
         // Create a new Patient
         $patient_user = \App\Models\User::create([
-            'first_name' => 'SeedPatient',
-            'last_name' => 'SeedPatient',
+            'first_name' => 'مريض',
+            'last_name' => 'تجريبي',
             'phone_number' => '0912345678',
             'email' => 'seed.Patient@gmail.com',
             'password' => "123456789",

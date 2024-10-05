@@ -37,6 +37,6 @@ class UserRateRule implements Rule
      */
     public function message()
     {
-        return 'User rates is not specified.';
+        return 'التقيم غير معرّف';
     }
 }

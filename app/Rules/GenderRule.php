@@ -36,6 +36,6 @@ class GenderRule implements Rule
      */
     public function message()
     {
-        return 'gender could be male(0) or female(1)';
+        return 'الجنس غير محدد';
     }
 }
