@@ -10,12 +10,10 @@ use App\Models\RoutineTest;
 use App\Models\User;
 use Illuminate\Http\Request;
 
-define("TESTS_HOST" , Controller::APP_URL . "api/tests/");
-
 class RoutineTestController extends Controller
 {
   
-    public const TEST_RESOURCES = TESTS_HOST;
+    public const TEST_RESOURCES = Controller::APP_URL . "api/tests/";
 
     public const ADMIN_INDEX_RESPONSE_FORMAT = [        // Admin view on tests index
         "url" => [

@@ -14,12 +14,10 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 
-define("APPOINTEMENT_HOSTS" , Controller::APP_URL . "api/appointements/");
-
 class AppointementController extends Controller
 {
 
-    public const APPOINTEMENT_RESOURCE = APPOINTEMENT_HOSTS;
+    public const APPOINTEMENT_RESOURCE = Controller::APP_URL . "api/appointements/";
 
     const ADMIN_APPOINTMENT_INDEX_RESPONSE_FORMAT = [         // General view on appointements index
         "appointment_id" => "id",

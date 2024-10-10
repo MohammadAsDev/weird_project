@@ -6,12 +6,9 @@ use App\Http\Requests\ClinicForm;
 use App\Models\Clinic;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-define("CLINICS_HOST" , $_SERVER["HTTP_HOST"] . "/api/clinics/");
-
 class ClinicController extends Controller
 {
-
-    public const CLINIC_RESOURCES = CLINICS_HOST;
+    public const CLINIC_RESOURCES = Controller::APP_URL . "api/clinics/";
 
     const PATIENT_CLINIC_ONLY_RESPONSE_FOMAT = [        // Patient view on clinic's data
         "url" => [

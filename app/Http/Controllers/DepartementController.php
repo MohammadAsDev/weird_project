@@ -17,16 +17,14 @@ use App\Models\User;
 use Exception;
 use Illuminate\Support\Facades\DB;
 
-define("DEPARTEMENT_HOST", Controller::APP_URL . "api/departements/");
-
 class DepartementController extends Controller
 {
-    public const DEPARTEMENTS_RESOURCES = DEPARTEMENT_HOST;
+    public const DEPARTEMENTS_RESOURCES = Controller::APP_URL . "api/departements/";
 
     public const ALL_DEPARTEMENT_RESPONSE_FORMAT = [
         "url" => [
             "attr" => "id",
-            "prefix" => DEPARTEMENT_HOST,
+            "prefix" => DepartementController::DEPARTEMENTS_RESOURCES,
             "meta" => true
         ],
         "departement_name" => "name",

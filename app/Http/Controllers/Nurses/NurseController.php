@@ -14,13 +14,11 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-define("NURSES_HOST" , Controller::APP_URL ."api/nurses/");
-
 
 class NurseController extends Controller
 {
 
-    public const NURSE_RESOURCES = NURSES_HOST;
+    public const NURSE_RESOURCES = Controller::APP_URL ."api/nurses/";
 
     public const ADMIN_INDEX_RESPONSE_FORMAT = [        // Admin's view on nurses index
         "user" => [

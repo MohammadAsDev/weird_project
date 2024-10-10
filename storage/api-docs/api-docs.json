@@ -147,7 +147,7 @@
                 }
             }
         },
-        "/api/appointements/patients": {
+        "/api/appointements/me/patients": {
             "get": {
                 "tags": [
                     "Doctor"
@@ -399,6 +399,9 @@
                     },
                     "404": {
                         "description": "Object Not Found"
+                    },
+                    "400": {
+                        "description": "Bad Request"
                     }
                 }
             }
@@ -452,24 +455,6 @@
                 "summary": "log out from system",
                 "description": "Logout Endpoint.",
                 "operationId": "logout",
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    }
-                }
-            }
-        },
-        "/api/auth/refresh": {
-            "post": {
-                "tags": [
-                    "Doctor",
-                    "Patient",
-                    "Nurse",
-                    "Admin"
-                ],
-                "summary": "refresh user's token",
-                "description": "Refresh Endpoint.",
-                "operationId": "refresh",
                 "responses": {
                     "200": {
                         "description": "OK"
@@ -1255,12 +1240,22 @@
         "/api/doctors/{id}": {
             "get": {
                 "tags": [
-                    "Admin"
+                    "Admin",
+                    "Anonymous"
                 ],
                 "summary": "read a doctor info",
                 "description": "Read a Specific Doctor Info Endpoint.",
                 "operationId": "readDoctor",
                 "parameters": [
+                    {
+                        "name": "full-detailed",
+                        "in": "query",
+                        "description": "full-detailed doctor",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
                     {
                         "name": "id",
                         "in": "path",
@@ -1402,11 +1397,23 @@
         "/api/doctors/": {
             "get": {
                 "tags": [
-                    "Admin"
+                    "Admin",
+                    "Anonymous"
                 ],
                 "summary": "list all doctors",
                 "description": "List All Doctors Endpoint.",
                 "operationId": "List Doctors",
+                "parameters": [
+                    {
+                        "name": "full-detailed",
+                        "in": "query",
+                        "description": "full-detailed doctor",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK"
@@ -1420,8 +1427,7 @@
         "/api/doctors/search/": {
             "get": {
                 "tags": [
-                    "Patient",
-                    "Admin"
+                    "Anonymous"
                 ],
                 "summary": "Seach on doctors using their full names",
                 "description": "Seach on Doctors Endpoint.",
@@ -1532,8 +1538,7 @@
         "/api/statistics/best_doctors": {
             "get": {
                 "tags": [
-                    "Patient",
-                    "Admin"
+                    "Anonymous"
                 ],
                 "summary": "list the best four doctors",
                 "description": "Best Doctors Report Endpoint.",
@@ -2140,7 +2145,7 @@
         "/api/patients/confirm": {
             "post": {
                 "tags": [
-                    "Patient"
+                    "Anonymous"
                 ],
                 "summary": "confirm patient's account",
                 "description": "Confirm Patient Endpoint.",
@@ -2174,6 +2179,9 @@
                     },
                     "401": {
                         "description": "Unauthorized"
+                    },
+                    "400": {
+                        "description": "Bad Request"
                     }
                 }
             }
@@ -2477,14 +2485,14 @@
                 "tags": [
                     "Doctor"
                 ],
-                "summary": "read routine test made by current doctor",
+                "summary": "read routine tests made by current doctor for specific patient",
                 "description": "Read Current Doctor Test Endpoint.",
                 "operationId": "readCurrentDoctorTest",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
-                        "description": "test's id",
+                        "description": "patient's id",
                         "required": true,
                         "schema": {
                             "type": "integer"
@@ -2647,8 +2655,7 @@
                     1,
                     2,
                     3,
-                    4,
-                    5
+                    4
                 ]
             },
             "Rate": {

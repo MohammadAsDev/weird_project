@@ -17,12 +17,10 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-define("PATIENTS_HOST" , Controller::APP_URL . "api/patients/");
-
 class PatientController extends Controller
 {
 
-    public const PATIENT_RESOURCES = PATIENTS_HOST;
+    public const PATIENT_RESOURCES = Controller::APP_URL . "api/patients/";
 
     const ADMIN_READ_RESPONSE_FORMAT = [        // Admin's View on Patient's Data
         "url" => [

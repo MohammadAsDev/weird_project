@@ -9,17 +9,15 @@ use App\Http\Controllers\DepartementController;
 use App\Http\Requests\UserForm;
 use App\Models\Doctor;
 use App\Models\User;
-use Error;
 use Exception;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-define("DOCTORS_HOST", Controller::APP_URL . "api/doctors/");
 
 class DoctorController extends Controller
 {
-    public const DOCTOR_RESOURCES = DOCTORS_HOST;
+    public const DOCTOR_RESOURCES = Controller::APP_URL . "api/doctors/";
 
     public const ADMIN_INDEX_RESPONSE_FORMAT = [        // Admin's view on doctors index
         "user" => [
