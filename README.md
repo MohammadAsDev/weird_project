@@ -67,17 +67,22 @@ php artisan key:generate
     php artisan l5-swagger:generate
     ```
 
-8. Run migration:
+8. Create a link: to make public file available for everyone
+```bash
+php artisan storage:link
+```
+
+9. Run migration:
 ```bash
 php artisan migrate
 ```
 
-9. Run Scheduler (For Crono Jobs):
+10. Run Scheduler (For Crono Jobs):
 ```bash
 php artisan schedule:work
 ```
 
-10. Start the server:
+11. Start the server:
 ```bash
 php artisan serve
 ```
