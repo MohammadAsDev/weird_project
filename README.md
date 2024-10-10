@@ -42,6 +42,8 @@ git clone https://github.com/MohammadAsDev/hospital-api
 4. Modify the `.env` file:\
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You need to set database settings (i.e. `DB_DATABASE` , `DB_USERNAME` , `DB_PASSWORD`)
 
+*Note* : Don't forget to update `APP_URL` in `.env` file to become `http://localhost:8000/`
+
 5. Generate key:
 ```bash
 php artisan key:generate
