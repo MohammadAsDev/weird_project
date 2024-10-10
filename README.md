@@ -18,7 +18,7 @@ This is my list for the next version of the system:
 
 1. Clone this repository:
 ```bash
-git clone https://github.com/MohammadAsDev/hospital-api
+git clone https://github.com/MohammadAsDev/weird_project/
 ```
 2. Install dependencies:
     * first go to the project directory
