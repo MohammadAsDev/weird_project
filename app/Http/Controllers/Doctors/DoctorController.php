@@ -10,6 +10,7 @@ use App\Http\Requests\UserForm;
 use App\Models\Doctor;
 use App\Models\User;
 use Exception;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -507,6 +508,10 @@ class DoctorController extends Controller
      *          @OA\Schema(
      *              type="string"
      *          )),
+     *      @OA\Parameter(name="spec" , description="doctor's specialization" , in="query" , required=false,
+     *          @OA\Schema(
+     *              type="integer"
+     *          )),
      *      @OA\Response(response="200", description="OK"),
      *      @OA\Response(response="403", description="Forbidden"),
      *      @OA\Response(response="401", description="Unauthorized")
@@ -514,13 +519,22 @@ class DoctorController extends Controller
      */
     public function search(Request $request) {
 
-        $query = htmlentities($request->query("name"));
-        $suggested_doctors = 
-            Doctor::join("users" , "users.id" , "doctors.user_id")
-            ->where(
-                DB::raw(
-                    "concat(first_name , ' ' , last_name)"
-                ) , "LIKE" , "%".$query."%")->get();
+        $doctor_name = htmlentities($request->query("name"));
+        $doctor_spec = htmlentities($request->query("spec"));
+
+        $suggested_doctors = new Collection();
+
+        if ($doctor_name)
+            $suggested_doctors = 
+                Doctor::join("users" , "users.id" , "doctors.user_id")
+                ->where(
+                    DB::raw(
+                        "concat(first_name , ' ' , last_name)"
+                    ) , "LIKE" , "%".$doctor_name."%")->get();
+
+        if($doctor_spec != null) 
+            $suggested_doctors = 
+                Doctor::where("specialization" , $doctor_spec)->get();
 
 
         return response()->json(Controller::paginate(

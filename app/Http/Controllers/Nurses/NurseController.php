@@ -312,6 +312,14 @@ class NurseController extends Controller
                 $validated["profile_picture"] = $image_path;
             }
 
+            if ( $validated["email"] === $nurse->user->email ) {
+                unset($validated["email"]);
+            }
+
+            if ( $validated["phone_number"] === $nurse->user->phone_number ) {
+                unset($validated["phone_number"]);
+            } 
+
             $nurse->user->update($validated);
             $nurse->update($validated);
             DB::commit();

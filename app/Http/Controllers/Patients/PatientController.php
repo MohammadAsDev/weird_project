@@ -250,6 +250,14 @@ class PatientController extends Controller
                 $validated["profile_picture"] = $image_path;
             }
 
+            if ( $validated["email"] === $patient->user->email ) {
+                unset($validated["email"]);
+            }
+
+            if ( $validated["phone_number"] === $patient->user->phone_number ) {
+                unset($validated["phone_number"]);
+            } 
+
             $patient->update($validated);
             DB::commit();
 
