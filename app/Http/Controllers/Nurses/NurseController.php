@@ -299,18 +299,17 @@ class NurseController extends Controller
         $this->authorize('update' , $nurse);
 
         $validated = $request->validated();
-        if (
-            strcmp($nurse->user->email, $validated["email"]) == 0 &&
-            strcmp($nurse->user->phone_number , $validated["phone_number"]) == 0
-        ) {
-            unset($validated["email"]);
-            unset($validated["phone_number"]);
-        } else {
-            $validated = $request->validate([
-                "email" => "unique:users",
-                "phone_number" => "unique:users"
-            ]);
+        $unique_rules = [];
+
+        if (strcmp($nurse->user->email, $validated["email"]) != 0) {
+            $unique_rules["email"] = "unique:users";
         }
+
+        if (strcmp($nurse->user->phone_number , $validated["phone_number"]) != 0) {
+            $unique_rules["phone_number"] = "unique:users";
+        }
+
+        $validated = $request->validate($unique_rules);
 
         $image = $request->file('profile_picture');
 

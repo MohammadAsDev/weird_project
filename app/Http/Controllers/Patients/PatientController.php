@@ -237,18 +237,17 @@ class PatientController extends Controller
         $this->authorize('update' , $patient);
 
         $validated = $request->validated();
-        if (
-            strcmp($patient->user->email, $validated["email"]) == 0 &&
-            strcmp($patient->user->phone_number , $validated["phone_number"]) == 0
-        ) {
-            unset($validated["email"]);
-            unset($validated["phone_number"]);
-        } else {
-            $validated = $request->validate([
-                "email" => "unique:users",
-                "phone_number" => "unique:users"
-            ]);
+        $unique_rules = [];
+
+        if (strcmp($patient->user->email, $validated["email"]) != 0) {
+            $unique_rules["email"] = "unique:users";
         }
+
+        if (strcmp($patient->user->phone_number , $validated["phone_number"]) != 0) {
+            $unique_rules["phone_number"] = "unique:users";
+        }
+
+        $validated = $request->validate($unique_rules);
 
         $status_code = 0;
         $response_data = [];
