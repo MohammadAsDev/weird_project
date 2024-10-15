@@ -388,6 +388,20 @@ class DoctorController extends Controller
         $this->authorize('update' , $doctor);
 
         $validated = $request->validated();
+
+        if (
+            strcmp($doctor->user->email, $validated["email"]) == 0 &&
+            strcmp($doctor->user->phone_number , $validated["phone_number"]) == 0
+        ) {
+            unset($validated["email"]);
+            unset($validated["phone_number"]);
+        } else {
+            $validated = $request->validate([
+                "email" => "unique:users",
+                "phone_number" => "unique:users"
+            ]);
+        }
+
         $image = $request->file('profile_picture');
         
         $status_code = 0;

@@ -237,6 +237,18 @@ class PatientController extends Controller
         $this->authorize('update' , $patient);
 
         $validated = $request->validated();
+        if (
+            strcmp($patient->user->email, $validated["email"]) == 0 &&
+            strcmp($patient->user->phone_number , $validated["phone_number"]) == 0
+        ) {
+            unset($validated["email"]);
+            unset($validated["phone_number"]);
+        } else {
+            $validated = $request->validate([
+                "email" => "unique:users",
+                "phone_number" => "unique:users"
+            ]);
+        }
 
         $status_code = 0;
         $response_data = [];
@@ -249,14 +261,6 @@ class PatientController extends Controller
                 $image_path = $image->store("uploads/images" , "public");
                 $validated["profile_picture"] = $image_path;
             }
-
-            if ( $validated["email"] === $patient->user->email ) {
-                unset($validated["email"]);
-            }
-
-            if ( $validated["phone_number"] === $patient->user->phone_number ) {
-                unset($validated["phone_number"]);
-            } 
 
             $patient->update($validated);
             DB::commit();

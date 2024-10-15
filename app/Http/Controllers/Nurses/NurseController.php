@@ -299,6 +299,19 @@ class NurseController extends Controller
         $this->authorize('update' , $nurse);
 
         $validated = $request->validated();
+        if (
+            strcmp($nurse->user->email, $validated["email"]) == 0 &&
+            strcmp($nurse->user->phone_number , $validated["phone_number"]) == 0
+        ) {
+            unset($validated["email"]);
+            unset($validated["phone_number"]);
+        } else {
+            $validated = $request->validate([
+                "email" => "unique:users",
+                "phone_number" => "unique:users"
+            ]);
+        }
+
         $image = $request->file('profile_picture');
 
         $response_data = [];
@@ -312,25 +325,16 @@ class NurseController extends Controller
                 $validated["profile_picture"] = $image_path;
             }
 
-            if ( $validated["email"] === $nurse->user->email ) {
-                unset($validated["email"]);
-            }
-
-            if ( $validated["phone_number"] === $nurse->user->phone_number ) {
-                unset($validated["phone_number"]);
-            } 
-
             $nurse->user->update($validated);
             $nurse->update($validated);
             DB::commit();
 
-            $request->image->storeAs('images' , $validated["profile_image"]);
 
+            $status_code = 200;
             $response_data = Controller::formatData(
                 $nurse , 
                 NurseController::ADMIN_READ_RESPONSE_FORMAT
             );
-            $status_code = 200;
 
         } catch (Exception $exp) {
             DB::rollBack();

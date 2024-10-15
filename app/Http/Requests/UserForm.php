@@ -85,9 +85,9 @@ class UserForm extends FormRequest
             return [
                 'first_name' => 'string|max:255|min:2|regex:/^[\p{Arabic}\s]+$/u',
                 'last_name'  => 'string|max:255|min:2|regex:/^[\p{Arabic}\s]+$/u',
-                'email' => 'email|unique:users',
+                'email' => 'email',
                 'password' => "string|max:500|min:9",
-                'phone_number' => 'unique:users|regex:/^0[0-9]{9}/', 
+                'phone_number' => 'regex:/^0[0-9]{9}/', 
                 'address' => "string|max:100|min:2",
                 'profile_picture' => "image|mimes:jpeg,png|max:500",
 
