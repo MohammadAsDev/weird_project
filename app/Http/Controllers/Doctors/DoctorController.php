@@ -387,18 +387,17 @@ class DoctorController extends Controller
         $doctor = DoctorController::getDoctorOr404($id);
         $this->authorize('update' , $doctor);
 
-        $validated = $request->validated();
         $unique_rules = [];
 
-        if (strcmp($doctor->user->email, $validated["email"]) != 0) {
+        if (strcmp($doctor->user->email, $request->get("email" , "")) != 0) {
             $unique_rules["email"] = "unique:users";
         }
 
-        if (strcmp($doctor->user->phone_number , $validated["phone_number"]) != 0) {
+        if (strcmp($doctor->user->phone_number , $request->get("phone_number" , "")) != 0) {
             $unique_rules["phone_number"] = "unique:users";
         }
 
-        $validated = $request->validate($unique_rules);
+        $validated = $request->validate(array_merge($unique_rules , $request->rules()));
 
         $image = $request->file('profile_picture');
         

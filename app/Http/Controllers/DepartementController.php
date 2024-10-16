@@ -15,6 +15,7 @@ use App\Models\Doctor;
 use App\Models\Nurse;
 use App\Models\User;
 use Exception;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class DepartementController extends Controller
@@ -169,18 +170,26 @@ class DepartementController extends Controller
      *      path="/api/departements/",
      *      tags={"Admin"},
      *      operationId = "listDepartements",
+     *      @OA\Parameter(name="paginated" , description="enable paginated" , in="query" , required=false,
+     *          @OA\Schema(
+     *              type="boolean"
+     *          )),
      *      summary = "list departements",
      *      description= "List Departements Endpoint.",
      *      @OA\Response(response="200", description="OK"),
      *      @OA\Response(response="403", description="Forbidden"),
      *  )
      */
-    protected function index(){
+    protected function index(Request $request){
         $this->authorize("viewAny" , Departement::class);
         $departements = Departement::all();
-        return response()->json(
-            Controller::paginate($departements)
-        );
+        $paginated = htmlentities($request->query("paginated"));
+        $paginated = $paginated == null ? true : boolval($paginated);
+        if ($paginated)
+            return response()->json(
+                Controller::paginate($departements)
+            );
+        return response()->json($departements);
     }
 
     /**
